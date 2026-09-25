@@ -1,0 +1,26 @@
+{
+  "duration_h": 24.0,
+  "valid_ratio": 0.9977083598569461,
+  "rmse_valid_W": 31.2001311114444,
+  "mae_valid_W": 24.689098306947773,
+  "energy_target_kWh": 83.01023257966415,
+  "energy_realized_kWh": 82.97160166666667,
+  "energy_error_pct": -0.046537531334345496,
+  "energy_hp_kWh": 83.90578888888889,
+  "elec_hp_kWh": 23.604980833333332,
+  "T_indoor_mean": 21.9909940857166,
+  "T_indoor_min": 19.98,
+  "T_indoor_max": 22.17,
+  "ack_latency_mean_s": 4.0,
+  "ack_latency_max_s": 4.0,
+  "fault_samples": 0,
+  "state_time_s": {
+    "INIT": 0.0,
+    "WAIT_PLC": 1.0,
+    "STABILIZING": 197.0,
+    "RUN": 86203.0,
+    "STEP_CHANGE": 0.0,
+    "SAFE_STOP": 0.0
+  },
+  "wall_time_s": 5.994331359863281
+}

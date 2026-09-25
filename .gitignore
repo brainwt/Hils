@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+slprj/
+*.slxc
+*.asv
+*_ert_rtw/
+*_grt_rtw/
+matlab/HILS_Controller.slx.bak
+results/*.csv

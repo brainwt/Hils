@@ -1,0 +1,13 @@
+  PASS  t_codec
+  PASS  t_frames
+  PASS  t_pi
+  PASS  t_delay_gains
+  PASS  t_delay_monitor
+  PASS  t_safety
+  PASS  t_state_machine
+  PASS  t_params_const_in_sync
+  PASS  t_closed_loop_step
+  PASS  t_closed_loop_delay90
+  PASS  t_io_emulator_equivalence
+  PASS  t_estop
+12 / 12 passed

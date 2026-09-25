@@ -1,0 +1,92 @@
+[
+  {
+    "t": 1.0,
+    "from": "WAIT_PLC",
+    "to": "STABILIZING",
+    "faults": []
+  },
+  {
+    "t": 203.0,
+    "from": "STABILIZING",
+    "to": "RUN",
+    "faults": []
+  },
+  {
+    "t": 911.0,
+    "from": "RUN",
+    "to": "SAFE_STOP",
+    "faults": [
+      "PLC heartbeat lost"
+    ]
+  },
+  {
+    "t": 1060.0,
+    "from": "SAFE_STOP",
+    "to": "WAIT_PLC",
+    "faults": []
+  },
+  {
+    "t": 1061.0,
+    "from": "WAIT_PLC",
+    "to": "STABILIZING",
+    "faults": []
+  },
+  {
+    "t": 1259.0,
+    "from": "STABILIZING",
+    "to": "RUN",
+    "faults": []
+  },
+  {
+    "t": 2101.0,
+    "from": "RUN",
+    "to": "SAFE_STOP",
+    "faults": [
+      "PLC fault / E-stop / watchdog"
+    ]
+  },
+  {
+    "t": 2260.0,
+    "from": "SAFE_STOP",
+    "to": "WAIT_PLC",
+    "faults": []
+  },
+  {
+    "t": 2261.0,
+    "from": "WAIT_PLC",
+    "to": "STABILIZING",
+    "faults": []
+  },
+  {
+    "t": 2461.0,
+    "from": "STABILIZING",
+    "to": "RUN",
+    "faults": []
+  },
+  {
+    "t": 3311.0,
+    "from": "RUN",
+    "to": "SAFE_STOP",
+    "faults": [
+      "PLC fault / E-stop / watchdog"
+    ]
+  },
+  {
+    "t": 3663.0,
+    "from": "SAFE_STOP",
+    "to": "WAIT_PLC",
+    "faults": []
+  },
+  {
+    "t": 3664.0,
+    "from": "WAIT_PLC",
+    "to": "STABILIZING",
+    "faults": []
+  },
+  {
+    "t": 3862.0,
+    "from": "STABILIZING",
+    "to": "RUN",
+    "faults": []
+  }
+]

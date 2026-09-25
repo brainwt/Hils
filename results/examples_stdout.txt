@@ -1,0 +1,54 @@
+== ex01_offline_24h
+duration_h             24.0
+valid_ratio            0.9977083598569461
+rmse_valid_W           31.2001311114444
+mae_valid_W            24.689098306947773
+energy_target_kWh      83.01023257966415
+energy_realized_kWh    82.97160166666667
+energy_error_pct       -0.046537531334345496
+energy_hp_kWh          83.90578888888889
+elec_hp_kWh            23.604980833333332
+T_indoor_mean          21.9909940857166
+T_indoor_min           19.98
+T_indoor_max           22.17
+ack_latency_mean_s     4.0
+ack_latency_max_s      4.0
+fault_samples          0
+state_time_s           {'INIT': 0.0, 'WAIT_PLC': 1.0, 'STABILIZING': 197.0, 'RUN': 86203.0, 'STEP_CHANGE': 0.0, 'SAFE_STOP': 0.0}
+wall_time_s            5.994331359863281
+== ex02_delay_study
+delay  comp  RMSE_en RMSE_run  valid  E_err% SAFE_s     Kp
+    3 False    230.6     30.1   0.90   -0.67      0  0.400
+   30 False    314.0     30.1   0.85   -1.08      0  0.400
+   60 False    427.0     49.6   0.68   -1.59      0  0.400
+   90 False   1157.5      nan   0.00   -4.80    180  0.400
+  120 False   1789.4      nan   0.00   -4.22    180  0.400
+    3  True    230.6     30.1   0.90   -0.67      0  0.400
+   30  True    313.2     30.0   0.85   -1.07      0  0.323
+   60  True    385.5     35.5   0.82   -1.63      0  0.164
+   90  True    431.8     54.8   0.83   -2.45      0  0.110
+  120  True    469.5     58.0   0.82   -3.23      0  0.083
+== ex04_fault_injection
+     1 s     WAIT_PLC -> STABILIZING 
+   203 s  STABILIZING -> RUN         
+   911 s          RUN -> SAFE_STOP   PLC heartbeat lost
+  1060 s    SAFE_STOP -> WAIT_PLC    
+  1061 s     WAIT_PLC -> STABILIZING 
+  1259 s  STABILIZING -> RUN         
+  2101 s          RUN -> SAFE_STOP   PLC fault / E-stop / watchdog
+  2260 s    SAFE_STOP -> WAIT_PLC    
+  2261 s     WAIT_PLC -> STABILIZING 
+  2461 s  STABILIZING -> RUN         
+  3311 s          RUN -> SAFE_STOP   PLC fault / E-stop / watchdog
+  3663 s    SAFE_STOP -> WAIT_PLC    
+  3664 s     WAIT_PLC -> STABILIZING 
+  3862 s  STABILIZING -> RUN         
+== ex03_modbus_loopback
+PLC scans=1802 modbus requests=3602 overruns=0
+valid_ratio            0.8012215435868961
+rmse_valid_W           29.9639885502683
+energy_error_pct       -2.9794488745331584
+ack_latency_mean_s     4.0
+ack_latency_max_s      4.0
+fault_samples          0
+modbus_errors          0
