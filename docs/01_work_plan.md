@@ -1,74 +1,83 @@
-# HILS 히트펌프 제어 구현 — 구체화된 작업계획
+# HILS 히트펌프 평가 — 구체화된 작업계획 (air-enthalpy 결합)
 
-> 대상: 가상건물 – Simulink(HILS supervisor) – PLC – 챔버(realization system) – 실제 히트펌프 폐루프
-> 원칙: **히트펌프 native control 보존.** Simulink는 압축기 주파수, EEV, 팬을 직접 명령하지 않습니다. 가상건물의 존부하를 챔버에서 재현하는 일만 하고, 히트펌프는 자체 제어기로 대응합니다.
+> 목적: 실제 히트펌프 제품을 **air-enthalpy 법**으로 평가하면서, 그 제품이 가상 건물 안에서 운전되는 것과 같은 조건을 만든다.
+> 원칙: 히트펌프 **native control 보존**. Simulink는 압축기, EEV, 팬이나 제품 설정온도를 명령하지 않습니다. 실내측 챔버 공기를 가상 존 상태로 맞출 뿐입니다.
 
-## 0. 원안에서 구체화·변경한 설계 결정
+## 0. 루프 구성 (개정)
 
-| # | 원안 | 구체화 결과 | 이유 |
-|---|------|-------------|------|
-| D1 | 가상건물이 `Qzone,target`, `Tzone,target` 출력 | 존 **공기 노드는 실측 챔버온도(T_indoor)** 를 쓰고, 외피/구조체 질량 노드만 가상(2R2C)으로 계산한다. 가상건물의 출력은 `Q_target`, 입력은 `T_indoor`(측정) | 존 공기온도를 가상과 실물 양쪽에 두면 둘이 서로 어긋납니다. 이 방식은 히트펌프 자체 온도조절기가 보는 온도와 건물모델이 쓰는 온도가 같은 값이라 결합이 일관됩니다. `Q_HP` 측정값은 에너지 수지 검증에 씁니다 |
-| D2 | `Qload` 부호 미정 | `Q_target > 0` = 난방부하 = 챔버 부하장치가 **열을 제거** | 겨울철 난방 시험 기준 |
-| D3 | PI → Rate limiter → Saturation | 1 s 층에서 **feedforward(Q_target) + PI**를 쓰고, 조건부 적분 anti-windup을 둔다. Simulink에는 동일한 한계의 Rate Limiter/Saturation 블록을 **2차 보호**로 한 번 더 둔다 | 부하장치 이득/바이어스 오차 보정, 포화 시 wind-up 방지 |
-| D4 | Sequence/Ack | 오차를 계산할 때 **ack된 프레임의 목표값(Q_ref)** 과 측정값을 비교한다. 미확인 시퀀스는 여러 개를 동시에 추적한다 | 지연이 건물 timestep(60 s)보다 길면 단일 추적이 영구 pending이 됩니다(시험 중 발견, 보고서 §4 E1) |
-| D5 | 1–2분 지연 연구 | 측정 ack 지연으로 PI 게인을 **SIMC 규칙으로 자동 디튜닝** | 고정 게인은 지연 ≥ 90 s에서 진동하고 SAFE_STOP에 들어갑니다(보고서 §3.2) |
-| D6 | Safety interlock (Simulink) | Simulink 인터록 7종에 더해 **PLC 측 watchdog**(SIM_heartbeat)으로 이중화 | Simulink→PLC 쓰기가 끊기면 PLC가 마지막 부하 명령을 계속 유지하는 문제(보고서 §4 E4) |
-| D7 | 레지스터 40001~40006, 40100~40103 | 40007 `Q_load_meas`, 40008 `AckSequence`, 40009 `PLC_status`, 40010 `PLC_heartbeat`, 40104 `SIM_heartbeat`, 40105 `T_outdoor_SP` 추가 | 부하 재현 피드백, ack, 통신 감시, 실외측 챔버 설정 |
+| 단계 | 누가 | 입력 | 출력 |
+|------|------|------|------|
+| ① 측정 | PLC (air-enthalpy 장치) | 실내기 토출·리턴 T/RH, 노즐 풍량, 대기압 | 레지스터 40001~40015 |
+| ② 열량 산정 | Simulink 1 s | 측정값 | Q_sens, Q_lat, Q_tot, m_w (구간 평균) |
+| ③ 가상 존 | Simulink 60 s (EnergyPlus 교체 지점) | 구간 평균 Q_sens, m_w, 기상, 내부발열 | 다음 시각 존 공기 T_z, RH_z |
+| ④ 설정값 | Simulink 1 s | 존 상태 | T_room_SP, RH_room_SP (범위·변화율 제한), Sequence |
+| ⑤ 재현 | PLC 국부 PI | 설정값 | 챔버 가열·냉각·가습·제습 → 실내기 리턴공기 |
 
-## 1. 시스템 구성과 시간층
+### 이전 구조에서 바뀐 점
+
+| 항목 | 이전 (폐기) | 현재 |
+|------|-------------|------|
+| 시뮬레이션 입력 | 챔버 실측 온도 | **실내기에서 air-enthalpy로 측정한 열량**(현열 + 수분) |
+| 시뮬레이션 출력 | 목표 부하 W | **다음 시각 실내 공기 상태** (T, RH) |
+| 챔버 제어 신호 | 부하장치 W 명령 | **실내측 챔버 공기 상태 설정값** |
+| 존 공기 노드 | 실측 (챔버) | 가상 (모델 상태변수) |
+| Simulink 제어기 | 부하 PI + 지연보상 | 없음. 추종은 PLC 국부 PI, Simulink는 설정값 생성과 감시만 |
+| 습도 | 감시만 | 존 수분수지 + 챔버 가습·제습 재현 + 잠열 평가 |
+| 계절 | 난방 | 난방 + 냉방(습코일 제습) |
+
+## 1. 시간층
 
 | 층 | 주기 | 구현 |
 |----|------|------|
-| Virtual building | 60 s | `hils_building_step.m` / `hils/building.py` (2R2C, EnergyPlus/FMU 교체 지점) |
-| HILS supervisory (Sequence 발행) | 60 s | Simulink `Supervisor_60s` / `hils_supervisor_building.m` |
-| Realization controller + safety + state machine | 1 s | Simulink `Realization_1s` / `hils_supervisor_step.m` |
-| PLC 측정·명령 | 1 s | Modbus TCP (실물 PLC 또는 가짜 PLC 서버) |
-| Plant 내부 적분 (에뮬레이터) | 0.1 s | `hils_plc_emulator_step.m` / `hils/emulator.py` |
-| Logging | 1 s | Simulink To Workspace / CSV |
+| 가상 존 (EnergyPlus 자리) | 60 s (내부 10 s 적분) | `hils_zone_step.m` / `hils/zone.py` |
+| Supervisor (air-enthalpy, 인터록, 상태머신, 설정값) | 1 s | `hils_supervisor_step.m` / `hils/supervisor.py` |
+| PLC 측정·명령, 챔버 국부 PI | 1 s | 실물 PLC 또는 가짜 PLC(`plc_server.py`) |
+| 에뮬레이터 내부 적분 | 0.1 s | `hils_plc_emulator_step.m` / `hils/emulator.py` |
 
 ## 2. 작업 분해(WBS)와 완료 기준
 
-### Phase 1 — MATLAB/Simulink ↔ Modbus TCP ↔ PLC
+### Phase 1 — 통신과 측정
 
-| ID | 작업 | 산출물 | 완료 기준 (검증 방법) |
-|----|------|--------|-----------------------|
-| 1.1 | 레지스터 맵과 스케일링 확정 | `config/hils_config.json`, `docs/02_interface_spec.md` | 설계문서 예시(2357 → 23.57 °C), 음수 2의 보수, overflow 포화 (`test_registers.py`, `t_codec`) |
-| 1.2 | 가짜 PLC(Modbus TCP 서버 + 챔버/히트펌프 에뮬레이터) | `hils/modbus_server.py`, `hils/plc_server.py` | FC3/6/16 정상 응답, 예외 응답 (`test_raw_protocol_and_exceptions`) |
-| 1.3 | Simulink/MATLAB I/O | `build_HILS_Controller.m`(Modbus 블록), `hils_io_modbus.m` | pymodbus 클라이언트로 왕복 확인 (`test_modbus_register_exchange_and_closed_loop`) |
-| 1.4 | Sequence/Ack 프로토콜 | `hils_delay_monitor_step.m`, `delay_monitor.py` | 지연 측정, 다중 미확인 시퀀스, 65535→1 wrap, timeout |
+| ID | 작업 | 완료 기준 |
+|----|------|-----------|
+| 1.1 | 레지스터 맵 (측정 15, 명령 7) | 코덱 시험, 레지스터 블록 시험 (`test_registers.py`, `t_frames`) |
+| 1.2 | 습공기 물성 (ASHRAE 2017) | 포화압·엔탈피·비체적·이슬점이 ASHRAE 표값과 일치 (`test_psychro.py`, `t_psychro`) |
+| 1.3 | Air-enthalpy 열량 | 난방 잠열 0, 냉방 부호, Q_tot = Q_sens + Q_lat. 측정 체인 vs 플랜트 참값 ±2 % |
+| 1.4 | 가짜 PLC (Modbus TCP 서버 + 챔버 + 실내기) | FC3/6/16, 예외응답, pymodbus 클라이언트 폐루프 |
+| 1.5 | Sequence/Ack | 다중 미확인 시퀀스, 설정값 페이로드, timeout |
 
-### Phase 2 — Supervisor 제어 로직
+### Phase 2 — Supervisor
 
-| ID | 작업 | 산출물 | 완료 기준 |
-|----|------|--------|-----------|
-| 2.1 | Feedforward + PI + Rate limiter + Saturation + anti-windup | `hils_pi_step.m`, `control.py` | 포화 중 적분 정지, 바이어스 플랜트 정상상태 오차 < 1 W |
-| 2.2 | Safety interlock (7종 bitmask) | `hils_safety_check.m`, `safety.py` | 비트별 단위시험, 주입 시험 (heartbeat, E-stop, 쓰기 두절) |
-| 2.3 | Delay monitor + 지연보상 게인 | `hils_delay_gains.m` | 지연 3~120 s에서 SAFE_STOP 0회 |
-| 2.4 | State machine (INIT→WAIT_PLC→STABILIZING→RUN→STEP_CHANGE, SAFE_STOP) | `hils_state_machine_step.m` | 전이 단위시험, 계단 3회에서 STEP_CHANGE 3회 |
-| 2.5 | Simulink 모델 자동생성 | `build_HILS_Controller.m` → `HILS_Controller.slx` | ⚠ MATLAB 환경에서 `ex02_build_simulink_model.m` 실행 (보고서 §5) |
+| ID | 작업 | 완료 기준 |
+|----|------|-----------|
+| 2.1 | 설정값 변화율·범위 제한 | 0.05 K/s, 0.2 %/s, 10~35 °C, 15~85 % |
+| 2.2 | 인터록 9종 + PLC watchdog | 비트 단위 시험, 장애 주입 4종 |
+| 2.3 | 상태머신 (T·RH 동시 추종 판정, 자동 재시작 3회 후 잠김) | 전이·잠김 시험 |
+| 2.4 | Simulink 모델 자동생성 | 블록 스크립트를 Simulink와 같은 배선으로 Octave에서 실행해 검증된 경로와 일치. ⚠ `.slx` 생성은 MATLAB에서 확인 |
 
-### Phase 3 — 가상건물(EnergyPlus/FMU) 연동
+### Phase 3 — 가상 존 / EnergyPlus
 
-| ID | 작업 | 산출물 | 완료 기준 |
-|----|------|--------|-----------|
-| 3.1 | 가상건물 모델(2R2C, EnergyPlus 대체) | `hils_building_step.m`, `building.py` | 24 h 폐루프: 에너지 오차 < 1 %, RUN 비율 > 99 % |
-| 3.2 | MATLAB co-simulation master (`step(sm, PauseTime)`) | `hils_master.m` (cosim/continuous) | ⚠ MATLAB R2024a+에서 `ex03_cosim_master.m` 실행 |
-| 3.3 | Simulink 없는 스크립트 master | `hils_run_realtime.m` | 오프라인 경로와 비트 단위 동일 (`t_io_emulator_equivalence`) |
-| 3.4 | EnergyPlus/FMU 교체 | `BuildingFcn` 인터페이스 `@(k,t,T_indoor) -> [Q,T,Tout]` | 실물 연동 시 수행 |
+| ID | 작업 | 완료 기준 |
+|----|------|-----------|
+| 3.1 | 가상 존 (존 공기 T·W + 구조체, 침기, 일사, 재실) | 정상상태 열수지 0.1 % 이내 |
+| 3.2 | 계절 시나리오 (겨울 난방, 여름 냉방) | 24 h: 추종 RMSE < 0.1 K / 1 %, 존 설정온도 유지, 여름 SHR 0.6~0.95 |
+| 3.3 | 이상적 결합 기준해석과 비교 | 존 온도 RMSE < 0.1 K, 에너지 차 < 2 % |
+| 3.4 | MATLAB master (cosim: 60 s 정지 → 외부 존 모델) | ⚠ MATLAB R2024a+에서 `ex03_cosim_master.m` |
+| 3.5 | EnergyPlus/FMU 교체 | `ZoneFcn(k, t, q) → zs` 인터페이스 구현 |
 
 ### 공통 — 검증
 
 | ID | 작업 | 완료 기준 |
 |----|------|-----------|
-| V1 | Python 레퍼런스 ↔ MATLAB lib 교차검증 | 3개 시나리오 7,201~14,401 스텝에서 레지스터 값 완전 일치 (`test_matlab_crosscheck.py`) |
-| V2 | 지연 연구 (3/30/60/90/120 s × 게인 고정/보상) | 결과표·그림 (`ex02_delay_study.py`) |
-| V3 | 장애 주입 | SAFE_STOP 진입과 자동 복귀 확인 (`ex04_fault_injection.py`) |
+| V1 | Python ↔ MATLAB 교차검증 | 겨울·여름·지연 90 s에서 레지스터 값 완전 일치 |
+| V2 | 지연 연구 (0~120 s) | 결합 충실도(존 온도, 에너지) 표 |
+| V3 | 장애 주입 | 트립 → 자동 복귀, 잠김 |
 
-## 3. 실물 적용 절차 (현장 체크리스트)
+## 3. 실물 적용 절차
 
-1. PLC 프로그램에 `docs/02_interface_spec.md`의 레지스터 맵, ack 규칙, watchdog을 구현합니다.
-2. **가짜 PLC로 먼저 시험**: `python -m hils.plc_server --port 5020`을 띄우고 `ex04_script_master_modbus.m`을 실행합니다(Simulink 없이 통신과 시퀀스만 확인).
-3. `build_HILS_Controller('PlcIo','modbus','Host',<PLC IP>,'Port',502)`로 모델을 생성한 뒤, Modbus 블록 대화상자에서 주소/개수/데이터형을 확인합니다.
-4. 부하장치의 이득/바이어스를 개루프 계단시험으로 측정해 `plant_gain`, `plant_tau_s`를 갱신합니다(지연보상 튜닝의 공칭 모델).
-5. 측정 ack 지연을 확인하고, 필요하면 `ack_timeout_s`와 `stabilize_*`를 조정합니다.
-6. 히트펌프 설정온도는 **히트펌프 리모컨에서만** 설정합니다(native control 보존). `hils_config.json`의 `emulator.hp_setpoint`는 에뮬레이터 전용 값입니다.
+1. PLC 프로그램: 레지스터 맵, 프레임 단위 적용 후 Ack, watchdog(설정값 hold), 챔버 T·RH 국부 PI를 구현합니다.
+2. 측정계: 노즐 풍량은 **토출측 공기 상태 기준 체적유량**으로 보냅니다. 노즐 앞 온도·습도가 토출 센서와 다르면 노즐 위치 값을 따로 받도록 확장합니다.
+3. 가짜 PLC로 리허설: `python -m hils.plc_server --season summer` 후 `ex04_script_master_modbus.m`.
+4. `build_HILS_Controller('Season','summer','PlcIo','modbus','Host',…)`로 모델을 생성한 뒤, Modbus 블록 대화상자를 확인합니다.
+5. 챔버 추종 성능을 확인합니다(설정값 계단 1 K / 10 %). 목표는 추종 RMSE 0.1 K / 1 % 이내입니다.
+6. 히트펌프 운전모드와 설정온도는 리모컨에서 설정합니다.

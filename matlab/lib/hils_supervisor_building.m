@@ -1,7 +1,9 @@
-function S = hils_supervisor_building(S, P, Q_target, T_target, T_out)
-%HILS_SUPERVISOR_BUILDING  60 s 층: 가상건물 새 목표 수신 -> Sequence 증가, step 감지.
-S.new_step = abs(Q_target - S.Q_target) > P.state_machine.step_threshold_W;
-S.Q_target = Q_target; S.T_target = T_target; S.T_out_target = T_out;
-S.seq = mod(S.seq, 65535) + 1;          % 1..65535 (0 = 명령없음 예약)
-S.send = true;                          % 다음 realization step 에서 delay monitor 등록
+function S = hils_supervisor_building(S, P, T_z, RH_z, T_out, RH_out)
+%HILS_SUPERVISOR_BUILDING  60 s 층: 가상 존의 다음 상태 -> 챔버 목표, Sequence 증가.
+p = P.state_machine;
+S.new_step = abs(T_z - S.T_target) > p.step_threshold_T_K || ...
+             abs(RH_z - S.RH_target) > p.step_threshold_RH_pct;
+S.T_target = T_z; S.RH_target = RH_z; S.T_out_target = T_out; S.RH_out_target = RH_out;
+S.seq = mod(S.seq, 65535) + 1;
+S.send = true;
 end

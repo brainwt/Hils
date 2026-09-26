@@ -40,10 +40,11 @@ def test_sequence_wrap_skips_zero():
 
 def test_register_map_blocks():
     rm = RegisterMap(load_config())
-    assert rm.offset("T_indoor") == 0 and rm.offset("Q_load_cmd") == 99
-    assert rm.block("PLC2SIM") == (0, 10)
-    assert rm.block("SIM2PLC") == (99, 6)
-    start, words = rm.pack("SIM2PLC", {"Q_load_cmd": -3200, "T_chamber_SP": 22.5, "Enable": 1,
-                                       "Sequence": 125})
+    assert rm.offset("T_supply") == 0 and rm.offset("T_room_SP") == 99
+    assert rm.block("PLC2SIM") == (0, 15)
+    assert rm.block("SIM2PLC") == (99, 7)
+    start, words = rm.pack("SIM2PLC", {"T_room_SP": 22.47, "RH_room_SP": 41.5, "T_outdoor_SP": -3.25,
+                                       "Enable": 1, "Sequence": 125})
     back = rm.unpack("SIM2PLC", start, words)
-    assert back["Q_load_cmd"] == -3200 and back["T_chamber_SP"] == 22.5 and back["Sequence"] == 125
+    assert back["T_room_SP"] == 22.47 and back["RH_room_SP"] == 41.5
+    assert back["T_outdoor_SP"] == -3.25 and back["Sequence"] == 125

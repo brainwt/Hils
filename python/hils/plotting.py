@@ -29,45 +29,55 @@ def _ma(v, n=60):
     return out
 
 
-def _shade_states(ax, t, state, x):
-    """RUN 이외 구간(데이터 무효)을 옅은 회색으로 표시."""
+def _shade(ax, state, x):
     bad = np.asarray(state) != 3
     if bad.any():
         ax.fill_between(x, 0, 1, where=bad, transform=ax.get_xaxis_transform(), color="#9c9a92",
                         alpha=0.15, lw=0, step="post", label="not RUN (invalid)")
 
 
-def plot_timeseries(log, path, title, xunit="h"):
+def plot_timeseries(log, path, title, xunit="h", ref=None):
+    """ref: 이상적 결합(기준해석) 로그 - 존 온도 비교선."""
     t = np.asarray(log["t"], float)
-    x = t / 3600 if xunit == "h" else t / 60
-    xl = "time [h]" if xunit == "h" else "time [min]"
-    fig, ax = plt.subplots(4, 1, figsize=(9, 8.6), sharex=True,
-                           gridspec_kw={"height_ratios": [3, 2, 2, 1.2]})
+    div = 3600 if xunit == "h" else 60
+    x = t / div
+    fig, ax = plt.subplots(5, 1, figsize=(9, 10.5), sharex=True,
+                           gridspec_kw={"height_ratios": [2.4, 2, 2, 1.6, 1.1]})
     a = ax[0]
-    a.plot(x, _ma(log["Q_HP"]) / 1e3, color=C[2], lw=1.2, label="Q_HP heat pump (60 s mean)")
-    a.plot(x, _ma(log["Q_load_meas"]) / 1e3, color=C[1], lw=1.2, label="Q_load_meas chamber (60 s mean)")
-    a.plot(x, np.asarray(log["Q_target"]) / 1e3, color=C[0], lw=1.6, ls=(0, (4, 2)),
-           label="Q_target virtual building", zorder=5)
-    _shade_states(a, t, log["state"], x)
-    a.set_ylabel("heat rate [kW]")
-    a.legend(loc="upper right", ncol=2, fontsize=8)
+    if ref is not None:
+        a.plot(np.asarray(ref["t"]) / div, ref["T_z"], color=C[3], lw=1.2, ls=(0, (1, 1.5)),
+               label="T_zone, ideal coupling (reference)")
+    a.plot(x, log["T_z"], color=C[0], lw=1.6, label="T_zone virtual (simulation output)")
+    a.plot(x, _ma(log["T_return"]), color=C[1], lw=1.1, label="T_return chamber (measured)")
+    a.plot(x, _ma(log["T_supply"]), color=C[2], lw=1.1, label="T_supply indoor unit (measured)")
+    _shade(a, log["state"], x)
+    a.set_ylabel("temperature [°C]")
+    a.legend(loc="best", ncol=2, fontsize=7.5)
     a.set_title(title, loc="left", color=INK, fontsize=11)
     a = ax[1]
-    e = np.asarray(log["Q_ref"]) - np.asarray(log["Q_load_meas"])
-    a.plot(x, e, color=C[0], lw=0.8)
-    a.axhline(0, color=INK2, lw=0.6)
-    a.set_ylabel("realization error\nQ_ref - Q_meas [W]")
-    lim = max(200, np.percentile(np.abs(e), 99.5) * 1.2)
-    a.set_ylim(-lim, lim)
+    a.plot(x, log["RH_z"], color=C[0], lw=1.6, label="RH_zone virtual")
+    a.plot(x, _ma(log["RH_return"]), color=C[1], lw=1.1, label="RH_return chamber")
+    a.set_ylabel("relative humidity [%]")
+    a.legend(loc="best", fontsize=7.5)
     a = ax[2]
-    a.plot(x, log["T_indoor"], color=C[0], label="T_indoor (chamber)")
-    a.set_ylabel("T_indoor [°C]")
+    a.plot(x, _ma(log["Q_sens"]) / 1e3, color=C[0], label="sensible (60 s mean)")
+    a.plot(x, _ma(log["Q_lat"]) / 1e3, color=C[1], label="latent (60 s mean)")
+    a.axhline(0, color=INK2, lw=0.6)
+    a.set_ylabel("heat to zone,\nair-enthalpy [kW]")
+    a.legend(loc="best", fontsize=7.5)
     a = ax[3]
+    eT = np.asarray(log["T_return"]) - np.asarray(log["T_ref"])
+    a.plot(x, eT, color=C[6], lw=0.7)
+    a.axhline(0, color=INK2, lw=0.6)
+    a.set_ylabel("tracking error\nT_return − T_sp [K]")
+    lim = max(0.3, float(np.percentile(np.abs(eT), 99.5)) * 1.2)
+    a.set_ylim(-lim, lim)
+    a = ax[4]
     a.step(x, log["state"], where="post", color=C[6])
     a.set_yticks(range(6))
     a.set_yticklabels(STATE_NAMES, fontsize=7)
     a.set_ylim(-0.5, 5.5)
-    a.set_xlabel(xl)
+    a.set_xlabel("time [h]" if xunit == "h" else "time [min]")
     fig.align_ylabels(ax)
     fig.tight_layout()
     fig.savefig(path)
@@ -75,23 +85,20 @@ def plot_timeseries(log, path, title, xunit="h"):
 
 
 def plot_delay_sweep(rows, path):
-    """rows: [(delay, comp:bool, rmse, energy_err, safe_stop_s)]"""
-    d = sorted({r[0] for r in rows})
-    fig, ax = plt.subplots(1, 2, figsize=(9, 3.4))
-    for i, (comp, lab) in enumerate([(False, "fixed PI gains"), (True, "delay-aware PI (SIMC)")]):
-        r = sorted([x for x in rows if x[1] == comp])
-        rm = [x[2] for x in r]
-        ax[0].plot(d, rm, marker="o", ms=5, color=C[i], label=lab)
-        ax[1].plot(d, [x[4] / 60 for x in r], marker="o", ms=5, color=C[i], label=lab)
-        ax[0].annotate(f"{rm[-1]:.0f} W", (d[-1], rm[-1]), textcoords="offset points",
-                       xytext=(4, 0), va="center", fontsize=8, color=INK)
-    ax[0].set_xlabel("PLC command/ack delay [s]")
-    ax[0].set_ylabel("RMSE Q_ref - Q_meas, all enabled samples [W]")
-    ax[0].legend(fontsize=8)
-    ax[1].set_xlabel("PLC command/ack delay [s]")
-    ax[1].set_ylabel("time outside RUN after start-up [min]")
-    ax[0].set_title("Realization error vs delay", loc="left", fontsize=10)
-    ax[1].set_title("Lost test time (STABILIZING / SAFE_STOP)", loc="left", fontsize=10)
+    """rows: [dict(delay_s, rmse_Tz_vs_ideal_K, energy_err_pct)]"""
+    d = [r["delay_s"] for r in rows]
+    fig, ax = plt.subplots(1, 2, figsize=(9, 3.3))
+    for a, key, lab, col in [(ax[0], "rmse_Tz_vs_ideal_K", "RMSE T_zone vs ideal coupling [K]", C[0]),
+                             (ax[1], "energy_err_pct", "HP energy vs ideal coupling [%]", C[1])]:
+        y = [r[key] for r in rows]
+        a.plot(d, y, marker="o", ms=5, color=col)
+        a.annotate(f"{y[-1]:.2f}", (d[-1], y[-1]), textcoords="offset points", xytext=(5, 0),
+                   va="center", fontsize=8)
+        a.set_xlabel("PLC command/ack delay [s]")
+        a.set_ylabel(lab)
+    ax[1].axhline(0, color=INK2, lw=0.6)
+    ax[0].set_title("Zone temperature fidelity", loc="left", fontsize=10)
+    ax[1].set_title("Energy fidelity", loc="left", fontsize=10)
     fig.tight_layout()
     fig.savefig(path)
     plt.close(fig)

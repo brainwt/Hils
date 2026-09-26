@@ -1,15 +1,27 @@
-function P = hils_params(cfgFile)
-%HILS_PARAMS  config/hils_config.json 을 읽어 파라미터 구조체로 반환.
-%   P = hils_params()            기본 설정 파일
-%   P = hils_params(cfgFile)     지정 설정 파일
-%   Python(hils.config) 과 같은 파일을 쓰므로 두 구현의 파라미터가 항상 일치한다.
+function P = hils_params(cfgFile, season)
+%HILS_PARAMS  config/hils_config.json -> 파라미터 구조체 (+ 계절 설정).
+%   P = hils_params()                 기본 파일, 겨울(난방)
+%   P = hils_params([], 'summer')     여름(냉방) 초기조건·히트펌프 모드
+%   계절 설정은 Python hils.cosim.season_overrides 와 같다.
 if nargin < 1 || isempty(cfgFile)
     here = fileparts(mfilename('fullpath'));
     cfgFile = fullfile(here, '..', '..', 'config', 'hils_config.json');
 end
-txt = fileread(cfgFile);
-P = jsondecode(txt);
-% PLC 에뮬레이터 FIFO 길이 (codegen 용 고정 상한)
+if nargin < 2 || isempty(season), season = 'winter'; end
+P = jsondecode(fileread(cfgFile));
+switch season
+    case 'winter'
+        P.zone.T0 = 20; P.zone.RH0 = 40; P.zone.Tm0 = 18; P.emulator.hp_mode = 'heat';
+        P.wx = P.weather.winter;
+    case 'summer'
+        P.zone.T0 = 27; P.zone.RH0 = 60; P.zone.Tm0 = 28; P.emulator.hp_mode = 'cool';
+        P.wx = P.weather.summer;
+    otherwise
+        error('HILS:season', 'season must be winter or summer');
+end
+P.emulator.T0 = P.zone.T0; P.emulator.RH0 = P.zone.RH0;
+P.emulator.hp_cool = strcmp(P.emulator.hp_mode, 'cool');   % codegen 용 숫자 플래그
+P.season_cool = double(strcmp(season, 'summer'));
 P.emulator.fifo_max = 600;
 P.delay_history = 64;
 end

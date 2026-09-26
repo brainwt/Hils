@@ -1,54 +1,90 @@
 == ex01_offline_24h
-duration_h             24.0
-valid_ratio            0.9977083598569461
-rmse_valid_W           31.2001311114444
-mae_valid_W            24.689098306947773
-energy_target_kWh      83.01023257966415
-energy_realized_kWh    82.97160166666667
-energy_error_pct       -0.046537531334345496
-energy_hp_kWh          83.90578888888889
-elec_hp_kWh            23.604980833333332
-T_indoor_mean          21.9909940857166
-T_indoor_min           19.98
-T_indoor_max           22.17
-ack_latency_mean_s     4.0
-ack_latency_max_s      4.0
-fault_samples          0
-state_time_s           {'INIT': 0.0, 'WAIT_PLC': 1.0, 'STABILIZING': 197.0, 'RUN': 86203.0, 'STEP_CHANGE': 0.0, 'SAFE_STOP': 0.0}
-wall_time_s            5.994331359863281
+== winter
+  duration_h             24.0
+  valid_ratio            0.9937153505167764
+  track_rmse_T_K         0.03167977263813623
+  track_rmse_RH_pct      0.3010683843352328
+  track_max_T_K          0.18671903995304362
+  T_z_mean               21.987473850183946
+  T_z_min                19.97815014233508
+  T_z_max                22.434853369577393
+  RH_z_mean              34.40502576982811
+  heat_kWh               99.53193145059038
+  cool_kWh               0.0
+  SHR                    nan
+  elec_kWh               28.549189166666668
+  COP_or_EER             3.4863312884136626
+  ack_latency_mean_s     4.0
+  ack_latency_max_s      4.0
+  fault_samples          0
+  state_time_s           {'INIT': 0.0, 'WAIT_PLC': 1.0, 'STABILIZING': 542.0, 'RUN': 85858.0, 'STEP_CHANGE': 0.0, 'SAFE_STOP': 0.0}
+  rmse_Tz_vs_ideal_K     0.029229746773051058
+  energy_vs_ideal_pct    -0.03142458426308795
+  wall_time_s            22.282011032104492
+== summer
+  duration_h             24.0
+  valid_ratio            0.9944676566243447
+  track_rmse_T_K         0.03116491493867752
+  track_rmse_RH_pct      0.3029091316212787
+  track_max_T_K          0.16165969675184044
+  T_z_mean               25.001144505033878
+  T_z_min                24.325652927133802
+  T_z_max                27.0
+  RH_z_mean              59.69150584804719
+  heat_kWh               0.0
+  cool_kWh               60.7016422354548
+  SHR                    0.8412544475742113
+  elec_kWh               13.473653333333333
+  COP_or_EER             4.50521033410301
+  ack_latency_mean_s     4.0
+  ack_latency_max_s      4.0
+  fault_samples          0
+  state_time_s           {'INIT': 0.0, 'WAIT_PLC': 1.0, 'STABILIZING': 477.0, 'RUN': 85923.0, 'STEP_CHANGE': 0.0, 'SAFE_STOP': 0.0}
+  rmse_Tz_vs_ideal_K     0.013073784275859989
+  energy_vs_ideal_pct    0.030961630696672668
+  wall_time_s            70.37350296974182
 == ex02_delay_study
-delay  comp  RMSE_en RMSE_run  valid  E_err% SAFE_s     Kp
-    3 False    230.6     30.1   0.90   -0.67      0  0.400
-   30 False    314.0     30.1   0.85   -1.08      0  0.400
-   60 False    427.0     49.6   0.68   -1.59      0  0.400
-   90 False   1157.5      nan   0.00   -4.80    180  0.400
-  120 False   1789.4      nan   0.00   -4.22    180  0.400
-    3  True    230.6     30.1   0.90   -0.67      0  0.400
-   30  True    313.2     30.0   0.85   -1.07      0  0.323
-   60  True    385.5     35.5   0.82   -1.63      0  0.164
-   90  True    431.8     54.8   0.83   -2.45      0  0.110
-  120  True    469.5     58.0   0.82   -3.23      0  0.083
-== ex04_fault_injection
-     1 s     WAIT_PLC -> STABILIZING 
-   203 s  STABILIZING -> RUN         
-   911 s          RUN -> SAFE_STOP   PLC heartbeat lost
-  1060 s    SAFE_STOP -> WAIT_PLC    
-  1061 s     WAIT_PLC -> STABILIZING 
-  1259 s  STABILIZING -> RUN         
-  2101 s          RUN -> SAFE_STOP   PLC fault / E-stop / watchdog
-  2260 s    SAFE_STOP -> WAIT_PLC    
-  2261 s     WAIT_PLC -> STABILIZING 
-  2461 s  STABILIZING -> RUN         
-  3311 s          RUN -> SAFE_STOP   PLC fault / E-stop / watchdog
-  3663 s    SAFE_STOP -> WAIT_PLC    
-  3664 s     WAIT_PLC -> STABILIZING 
-  3862 s  STABILIZING -> RUN         
+ season delay  RMSE_Tz  max_Tz  E_err%  trackT trackRH  valid SAFE_s
+ winter     0    0.042   0.305   -0.03   0.033    0.30  0.988      0
+ winter     3    0.041   0.303   -0.03   0.033    0.30  0.987      0
+ winter    30    0.042   0.289   -0.01   0.034    0.30  0.988      0
+ winter    60    0.046   0.277   -0.00   0.034    0.30  0.988      0
+ winter    90    0.054   0.298    0.01   0.035    0.30  0.987      0
+ winter   120    0.066   0.390    0.02   0.036    0.30  0.988      0
+ summer     0    0.018   0.085   -0.10   0.032    0.30  0.989      0
+ summer     3    0.018   0.083   -0.09   0.032    0.31  0.989      0
+ summer    30    0.021   0.077    0.00   0.032    0.31  0.990      0
+ summer    60    0.030   0.135    0.11   0.033    0.31  0.989      0
+ summer    90    0.043   0.195    0.21   0.033    0.31  0.990      0
+ summer   120    0.058   0.253    0.33   0.033    0.31  0.989      0
 == ex03_modbus_loopback
 PLC scans=1802 modbus requests=3602 overruns=0
-valid_ratio            0.8012215435868961
-rmse_valid_W           29.9639885502683
-energy_error_pct       -2.9794488745331584
+valid_ratio            0.7351471404775125
+track_rmse_T_K         0.04664187191350507
+track_rmse_RH_pct      0.37184912324364133
+T_z_mean               25.60972709171469
+cool_kWh               2.9796933994540207
+SHR                    0.5767152998105584
 ack_latency_mean_s     4.0
 ack_latency_max_s      4.0
 fault_samples          0
 modbus_errors          0
+== ex04_fault_injection
+     1 s     WAIT_PLC -> STABILIZING 
+   543 s  STABILIZING -> RUN         
+   911 s          RUN -> SAFE_STOP   PLC heartbeat lost
+  1060 s    SAFE_STOP -> WAIT_PLC    
+  1061 s     WAIT_PLC -> STABILIZING 
+  1181 s  STABILIZING -> RUN         
+  2101 s          RUN -> SAFE_STOP   PLC fault / E-stop / watchdog
+  2260 s    SAFE_STOP -> WAIT_PLC    
+  2261 s     WAIT_PLC -> STABILIZING 
+  2381 s  STABILIZING -> RUN         
+  3311 s          RUN -> SAFE_STOP   PLC fault / E-stop / watchdog
+  3663 s    SAFE_STOP -> WAIT_PLC    
+  3664 s     WAIT_PLC -> STABILIZING 
+  3784 s  STABILIZING -> RUN         
+  6481 s          RUN -> SAFE_STOP   chamber cannot follow setpoint
+  6541 s    SAFE_STOP -> WAIT_PLC    
+  6542 s     WAIT_PLC -> STABILIZING 
+latched: False | restarts: 1
