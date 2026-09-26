@@ -20,6 +20,7 @@
 | `matlab/lib/` | 습공기, air-enthalpy, 가상 존, supervisor, 에뮬레이터. 블록과 스크립트가 공용 (Octave 검증) |
 | `python/hils/` | Python 레퍼런스 구현, **가짜 PLC Modbus TCP 서버**, 챔버·실내기 에뮬레이터 |
 | `examples/`, `matlab/examples/` | 예제 (24 h 겨울·여름, 지연 연구, Modbus 루프백, 장애 주입) |
+| `villas/hils.conf` | VILLASnode 게이트웨이 설정 초안 (Modbus ↔ UDP, 미실행) |
 | `docs/` | 작업계획, 인터페이스 사양, **결과보고서**, 비전공자용 설명 페이지 (`hils_process_explained.html`) |
 
 ## 빠른 시작
@@ -47,4 +48,5 @@ addpath tests; run_all_tests                                                % Oc
 - [docs/01_work_plan.md](docs/01_work_plan.md): 작업계획, WBS, 완료 기준
 - [docs/02_interface_spec.md](docs/02_interface_spec.md): 루프 순서, 레지스터 맵, air-enthalpy 식, 상태머신, 인터록
 - [docs/03_result_report.md](docs/03_result_report.md): 시험 결과, 발견 오류와 수정, 한계
+- [docs/04_villasnode_design.md](docs/04_villasnode_design.md): VILLASnode 게이트웨이 설계 (PLC ↔ VILLASnode ↔ 시뮬레이터, float32 맵), 설정 초안 `villas/hils.conf`
 - [docs/hils_process_explained.html](docs/hils_process_explained.html): 비전공자용 도식 설명
