@@ -1,0 +1,112 @@
+[
+  {
+    "delay_s": 3,
+    "delay_compensation": false,
+    "rmse_enabled_W": 230.63702362514712,
+    "rmse_run_W": 30.06209034330342,
+    "valid_ratio": 0.9012637133731426,
+    "energy_error_pct": -0.6670554907515414,
+    "safe_stop_s": 0.0,
+    "ack_latency_max_s": 4.0,
+    "Kp_final": 0.4
+  },
+  {
+    "delay_s": 30,
+    "delay_compensation": false,
+    "rmse_enabled_W": 314.0011378694882,
+    "rmse_run_W": 30.085961198281332,
+    "valid_ratio": 0.8505763088459937,
+    "energy_error_pct": -1.0782702882852857,
+    "safe_stop_s": 0.0,
+    "ack_latency_max_s": 31.0,
+    "Kp_final": 0.4
+  },
+  {
+    "delay_s": 60,
+    "delay_compensation": false,
+    "rmse_enabled_W": 426.99018561450697,
+    "rmse_run_W": 49.55908785593546,
+    "valid_ratio": 0.6836550479100125,
+    "energy_error_pct": -1.5915125256901628,
+    "safe_stop_s": 0.0,
+    "ack_latency_max_s": 61.0,
+    "Kp_final": 0.4
+  },
+  {
+    "delay_s": 90,
+    "delay_compensation": false,
+    "rmse_enabled_W": 1157.4684960582085,
+    "rmse_run_W": NaN,
+    "valid_ratio": 0.0,
+    "energy_error_pct": -4.802044103760484,
+    "safe_stop_s": 180.0,
+    "ack_latency_max_s": 91.0,
+    "Kp_final": 0.4
+  },
+  {
+    "delay_s": 120,
+    "delay_compensation": false,
+    "rmse_enabled_W": 1789.431989592093,
+    "rmse_run_W": NaN,
+    "valid_ratio": 0.0,
+    "energy_error_pct": -4.219380103316114,
+    "safe_stop_s": 180.0,
+    "ack_latency_max_s": 121.0,
+    "Kp_final": 0.4
+  },
+  {
+    "delay_s": 3,
+    "delay_compensation": true,
+    "rmse_enabled_W": 230.63702362514712,
+    "rmse_run_W": 30.06209034330342,
+    "valid_ratio": 0.9012637133731426,
+    "energy_error_pct": -0.6670554907515414,
+    "safe_stop_s": 0.0,
+    "ack_latency_max_s": 4.0,
+    "Kp_final": 0.4
+  },
+  {
+    "delay_s": 30,
+    "delay_compensation": true,
+    "rmse_enabled_W": 313.1504991835218,
+    "rmse_run_W": 30.037541955053026,
+    "valid_ratio": 0.8487710040272184,
+    "energy_error_pct": -1.065894573126701,
+    "safe_stop_s": 0.0,
+    "ack_latency_max_s": 31.0,
+    "Kp_final": 0.3225806451612903
+  },
+  {
+    "delay_s": 60,
+    "delay_compensation": true,
+    "rmse_enabled_W": 385.4885529356799,
+    "rmse_run_W": 35.50822820335271,
+    "valid_ratio": 0.8153034300791556,
+    "energy_error_pct": -1.631583624951397,
+    "safe_stop_s": 0.0,
+    "ack_latency_max_s": 61.0,
+    "Kp_final": 0.16393442622950818
+  },
+  {
+    "delay_s": 90,
+    "delay_compensation": true,
+    "rmse_enabled_W": 431.7590218127082,
+    "rmse_run_W": 54.80176229168719,
+    "valid_ratio": 0.8344674350784613,
+    "energy_error_pct": -2.4531966894406487,
+    "safe_stop_s": 0.0,
+    "ack_latency_max_s": 91.0,
+    "Kp_final": 0.10989010989010989
+  },
+  {
+    "delay_s": 120,
+    "delay_compensation": true,
+    "rmse_enabled_W": 469.5318274030467,
+    "rmse_run_W": 58.01082453052934,
+    "valid_ratio": 0.8193306485210388,
+    "energy_error_pct": -3.2308170860412155,
+    "safe_stop_s": 0.0,
+    "ack_latency_max_s": 121.0,
+    "Kp_final": 0.08264462809917356
+  }
+]
