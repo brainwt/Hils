@@ -5,7 +5,6 @@ function io = hils_io_emulator(P)
 E = hils_plc_emulator_init(P);
 io.read    = @read_;
 io.write   = @write_;
-io.tindoor = @tindoor_;
 io.state   = @state_;
 io.set     = @set_;
 io.close   = @() [];
@@ -14,9 +13,6 @@ io.close   = @() [];
     end
     function write_(w)
         [E, ~] = hils_plc_emulator_step(E, P, w);
-    end
-    function v = tindoor_()
-        v = hils_decode(E.meas_words(1), P.registers.T_indoor.scale, true);
     end
     function s = state_()
         s = E;

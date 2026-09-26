@@ -1,6 +1,6 @@
 """PLC 에뮬레이터를 Modbus TCP 서버로 노출 (가짜 PLC, Phase 1 시험용).
 
-    cd python && python -m hils.plc_server --port 5020 --time-scale 1
+    cd python && python -m hils.plc_server --port 5020 --season summer --time-scale 1
 
 실제 PLC 대신 이 서버에 Simulink(Industrial Communication Toolbox Modbus 블록),
 MATLAB modbus() 객체, 또는 Python master 가 접속한다.
@@ -60,8 +60,11 @@ def main():
     ap.add_argument("--host", default="127.0.0.1")
     ap.add_argument("--port", type=int, default=None)
     ap.add_argument("--time-scale", type=float, default=1.0)
+    ap.add_argument("--season", choices=["winter", "summer"], default="winter",
+                    help="에뮬레이터 초기조건과 히트펌프 운전모드(리모컨 설정에 해당)")
     a = ap.parse_args()
-    srv = PLCServer(load_config(), a.host, a.port, a.time_scale).start()
+    from .cosim import season_overrides
+    srv = PLCServer(load_config(overrides=season_overrides(a.season)), a.host, a.port, a.time_scale).start()
     print(f"fake PLC on {srv.host}:{srv.port} (time scale x{a.time_scale}); Ctrl+C to stop")
     try:
         while True:

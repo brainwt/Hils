@@ -1,13 +1,19 @@
   PASS  t_codec
   PASS  t_frames
-  PASS  t_pi
-  PASS  t_delay_gains
+  PASS  t_psychro
+  PASS  t_air_enthalpy
+  PASS  t_coil
+  PASS  t_zone_balance
   PASS  t_delay_monitor
   PASS  t_safety
   PASS  t_state_machine
+  PASS  t_state_machine_latch
+  PASS  t_setpoint
   PASS  t_params_const_in_sync
-  PASS  t_closed_loop_step
-  PASS  t_closed_loop_delay90
+  PASS  t_closed_loop_winter
+  PASS  t_closed_loop_summer
   PASS  t_io_emulator_equivalence
   PASS  t_estop
-12 / 12 passed
+written /home/user/Hils/matlab/lib/hils_params_const.m
+  PASS  t_simulink_block_scripts
+17 / 17 passed

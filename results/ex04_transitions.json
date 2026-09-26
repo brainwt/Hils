@@ -6,7 +6,7 @@
     "faults": []
   },
   {
-    "t": 203.0,
+    "t": 543.0,
     "from": "STABILIZING",
     "to": "RUN",
     "faults": []
@@ -32,7 +32,7 @@
     "faults": []
   },
   {
-    "t": 1259.0,
+    "t": 1181.0,
     "from": "STABILIZING",
     "to": "RUN",
     "faults": []
@@ -58,7 +58,7 @@
     "faults": []
   },
   {
-    "t": 2461.0,
+    "t": 2381.0,
     "from": "STABILIZING",
     "to": "RUN",
     "faults": []
@@ -84,9 +84,29 @@
     "faults": []
   },
   {
-    "t": 3862.0,
+    "t": 3784.0,
     "from": "STABILIZING",
     "to": "RUN",
+    "faults": []
+  },
+  {
+    "t": 6481.0,
+    "from": "RUN",
+    "to": "SAFE_STOP",
+    "faults": [
+      "chamber cannot follow setpoint"
+    ]
+  },
+  {
+    "t": 6541.0,
+    "from": "SAFE_STOP",
+    "to": "WAIT_PLC",
+    "faults": []
+  },
+  {
+    "t": 6542.0,
+    "from": "WAIT_PLC",
+    "to": "STABILIZING",
     "faults": []
   }
 ]

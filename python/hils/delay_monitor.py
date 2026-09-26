@@ -3,8 +3,8 @@
 - 미확인(outstanding) 시퀀스를 모두 추적한다. 지연이 Ts_building 보다 길면
   여러 시퀀스가 동시에 대기할 수 있기 때문이다(단일 추적은 ack 를 영원히 못 맞춘다).
 - AckSequence = s 를 받으면 s 이전(모듈러 순서)의 모든 시퀀스를 확인 처리한다.
-- 각 시퀀스의 목표값을 기억해 두었다가 acked_target() 으로 "PLC 가 실제 적용 중인
-  프레임의 목표" 를 돌려준다 -> 측정값과 같은 timestep 끼리 비교 가능.
+- 각 시퀀스의 설정값(T_sp, RH_sp)을 기억해 두었다가 acked_target() 으로 "PLC 가 실제
+  적용 중인 프레임의 설정값" 을 돌려준다 -> 챔버 추종오차를 같은 timestep 끼리 비교.
 """
 from collections import OrderedDict
 
