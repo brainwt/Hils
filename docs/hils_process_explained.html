@@ -1,0 +1,529 @@
+<title>HILS 작동 원리 쉽게 보기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+KR:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f4f6f7; --paper:#ffffff; --ink:#15202a; --muted:#566471; --line:#d3dce2; --soft:#e8eef1;
+  --accent:#0d6a8a; --accent-soft:#dcedf3; --heat:#c8452a; --heat-soft:#f8e3dd; --ok:#1f7a4d; --ok-soft:#dff0e6;
+  --sans:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0f151a; --paper:#161e25; --ink:#e6edf1; --muted:#9babb6; --line:#2b3842; --soft:#1d2830;
+    --accent:#56b6d8; --accent-soft:#16333f; --heat:#f07e62; --heat-soft:#3a211b; --ok:#5fc290; --ok-soft:#173327;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0f151a; --paper:#161e25; --ink:#e6edf1; --muted:#9babb6; --line:#2b3842; --soft:#1d2830;
+  --accent:#56b6d8; --accent-soft:#16333f; --heat:#f07e62; --heat-soft:#3a211b; --ok:#5fc290; --ok-soft:#173327;
+}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.7;margin:0;padding:0 16px;}
+.wrap{max-width:860px;margin:0 auto;padding-block:40px 80px;}
+h1,h2,h3{text-wrap:balance;line-height:1.3;margin:0}
+h1{font-size:clamp(28px,5vw,40px);font-weight:700;letter-spacing:-0.01em}
+h2{font-size:24px;font-weight:700}
+h3{font-size:17px;font-weight:700}
+p{margin:0;max-width:66ch}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.lede{font-size:18px;color:var(--muted);margin-top:14px}
+header{display:grid;gap:10px;padding-bottom:28px;border-bottom:1px solid var(--line)}
+nav.toc{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+nav.toc a{font-size:13px;color:var(--ink);text-decoration:none;border:1px solid var(--line);background:var(--paper);padding:4px 10px;border-radius:999px}
+nav.toc a:hover,nav.toc a:focus-visible{border-color:var(--accent);color:var(--accent);outline:none}
+section{display:grid;gap:16px;padding-block:40px;border-bottom:1px solid var(--line)}
+section:last-of-type{border-bottom:0}
+.sec-head{display:grid;gap:6px}
+.easy{background:var(--accent-soft);border-radius:10px;padding:14px 18px;display:grid;gap:6px}
+.easy b{font-size:13px;letter-spacing:.04em;color:var(--accent)}
+.easy p{max-width:none}
+figure{margin:0;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:18px;display:grid;gap:10px}
+figure .scroll{overflow-x:auto}
+figure svg{display:block;width:100%;min-width:620px;height:auto;color:var(--ink)}
+figcaption{font-size:14px;color:var(--muted)}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--paper)}
+table{border-collapse:collapse;width:100%;font-size:14.5px;min-width:560px}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12.5px;font-weight:500;color:var(--muted);background:var(--soft);letter-spacing:.02em}
+tr:last-child td{border-bottom:0}
+td:first-child{white-space:nowrap}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+code,.mono{font-family:var(--mono);font-size:.9em}
+.pill{display:inline-block;font-size:12px;padding:1px 8px;border-radius:999px;font-weight:500;white-space:nowrap}
+.pill.ok{background:var(--ok-soft);color:var(--ok)}
+.pill.bad{background:var(--heat-soft);color:var(--heat)}
+.pill.warn{background:var(--soft);color:var(--muted);border:1px solid var(--line)}
+ol.steps{margin:0;padding:0;list-style:none;counter-reset:s;display:grid;gap:10px}
+ol.steps li{counter-increment:s;display:grid;grid-template-columns:34px 1fr;gap:12px;align-items:start;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+ol.steps li::before{content:counter(s);font-family:var(--mono);font-weight:500;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:var(--accent);color:var(--paper);font-size:13px}
+ol.steps li div{display:grid;gap:2px}
+ol.steps small{color:var(--muted);font-size:13.5px}
+.note{font-size:14px;color:var(--muted);border-left:3px solid var(--line);padding-left:12px}
+footer{padding-top:28px;font-size:13.5px;color:var(--muted);display:grid;gap:6px}
+
+/* SVG role classes (page stylesheet, themed by tokens) */
+.box{fill:var(--paper);stroke:var(--line);stroke-width:1.5}
+.box-acc{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5}
+.box-heat{fill:var(--heat-soft);stroke:var(--heat);stroke-width:1.5}
+.box-ok{fill:var(--ok-soft);stroke:var(--ok);stroke-width:1.8}
+.box-soft{fill:var(--soft);stroke:var(--line);stroke-width:1.2}
+.t{fill:var(--ink);font-family:var(--sans);font-size:14px}
+.tb{fill:var(--ink);font-family:var(--sans);font-size:15px;font-weight:700}
+.ts{fill:var(--muted);font-family:var(--sans);font-size:12px}
+.tm{fill:var(--ink);font-family:var(--mono);font-size:13px}
+.ta{fill:var(--accent);font-family:var(--sans);font-size:12.5px;font-weight:500}
+.th{fill:var(--heat);font-family:var(--sans);font-size:12.5px;font-weight:500}
+.ln{stroke:var(--ink);stroke-width:1.6;fill:none}
+.ln-acc{stroke:var(--accent);stroke-width:1.8;fill:none}
+.ln-heat{stroke:var(--heat);stroke-width:1.8;fill:none}
+.ln-mute{stroke:var(--muted);stroke-width:1.2;fill:none}
+.dash{stroke-dasharray:5 4}
+.ah{fill:var(--ink)} .ah-acc{fill:var(--accent)} .ah-heat{fill:var(--heat)}
+.tick{stroke:var(--muted);stroke-width:.8}
+.dot-acc{fill:var(--accent)}
+
+@media (max-width:520px){
+  body{font-size:15px}
+  figure{padding:12px}
+}
+@media (prefers-reduced-motion: reduce){ *{scroll-behavior:auto} }
+html{scroll-behavior:smooth}
+</style>
+
+<div class="wrap">
+<header>
+  <span class="eyebrow">HILS · 히트펌프 실험 장치</span>
+  <h1>가상의 집과 진짜 히트펌프를 연결하는 법</h1>
+  <p class="lede">컴퓨터 속 가상 건물이 "지금 이만큼 춥다"고 말하면, 실험실의 방이 그 추위를 실제로 만들어 냅니다. 진짜 히트펌프는 그 방 안에서 평소처럼 스스로 판단해 난방합니다. 이 페이지는 그 과정을 처음부터 끝까지 단계별로 설명합니다.</p>
+  <nav class="toc" aria-label="목차">
+    <a href="#overview">한눈에 보기</a><a href="#cast">등장인물</a><a href="#clock">두 개의 시계</a>
+    <a href="#mailbox">숫자 우편함</a><a href="#ticket">송장 번호</a><a href="#cruise">조절 장치</a>
+    <a href="#lights">운전 단계</a><a href="#safety">안전장치</a><a href="#modes">실행 방법</a><a href="#procedure">실험 순서</a>
+  </nav>
+</header>
+
+<!-- 0 -->
+<section id="overview">
+  <div class="sec-head"><span class="eyebrow">한눈에 보기</span><h2>한 바퀴 도는 이야기</h2></div>
+  <div class="easy"><b>쉽게 말하면</b>
+    <p>겨울에 실제 집을 지어 놓고 히트펌프를 시험하려면 돈과 시간이 너무 듭니다. 그래서 집은 컴퓨터 속에만 짓고, 히트펌프가 들어갈 작은 실험실 방 하나만 진짜로 둡니다. 가상 집이 "지금 열이 3.2 kW만큼 새어 나간다"고 계산하면, 실험실 방은 정확히 그만큼 열을 빼앗아 추운 집과 같은 상황을 만듭니다. 히트펌프는 자기가 실험 중인 줄도 모르고 평소처럼 방을 데웁니다.</p>
+  </div>
+  <figure>
+    <div class="scroll">
+    <svg viewBox="0 0 760 380" role="img" aria-label="가상 집이 필요한 열을 통역사(Simulink)에 전달하고, 통역사는 현장 반장(PLC)에게 1초마다 명령을 보낸다. PLC는 실험실 방의 부하장치를 조작하고, 히트펌프는 방 온도만 보고 스스로 난방한다. 통역사는 히트펌프에 직접 명령하지 않는다.">
+      <defs>
+        <marker id="a0" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker>
+        <marker id="a0h" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah-heat"/></marker>
+      </defs>
+      <!-- top row -->
+      <rect x="20" y="30" width="190" height="104" rx="10" class="box-acc"/>
+      <text x="115" y="62" text-anchor="middle" class="tb">가상 집</text>
+      <text x="115" y="84" text-anchor="middle" class="ts">컴퓨터 속 건물</text>
+      <text x="115" y="104" text-anchor="middle" class="ts">벽·창문·햇빛·날씨 계산</text>
+      <text x="115" y="122" text-anchor="middle" class="ts">1분마다 한 번</text>
+
+      <rect x="290" y="30" width="190" height="104" rx="10" class="box"/>
+      <text x="385" y="62" text-anchor="middle" class="tb">통역사</text>
+      <text x="385" y="84" text-anchor="middle" class="ts">Simulink 감독 프로그램</text>
+      <text x="385" y="104" text-anchor="middle" class="ts">목표와 실제를 비교해</text>
+      <text x="385" y="122" text-anchor="middle" class="ts">1초마다 명령 조정</text>
+
+      <rect x="560" y="30" width="180" height="104" rx="10" class="box"/>
+      <text x="650" y="62" text-anchor="middle" class="tb">현장 반장</text>
+      <text x="650" y="84" text-anchor="middle" class="ts">PLC 제어기</text>
+      <text x="650" y="104" text-anchor="middle" class="ts">장비를 움직이고</text>
+      <text x="650" y="122" text-anchor="middle" class="ts">센서 값을 읽음</text>
+
+      <!-- building <-> simulink -->
+      <line x1="210" y1="64" x2="286" y2="64" class="ln" marker-end="url(#a0)"/>
+      <text x="248" y="56" text-anchor="middle" class="ts">필요한 열</text>
+      <line x1="290" y1="104" x2="214" y2="104" class="ln" marker-end="url(#a0)"/>
+      <text x="252" y="122" text-anchor="middle" class="ts">방 온도</text>
+      <!-- simulink <-> plc -->
+      <line x1="480" y1="64" x2="556" y2="64" class="ln" marker-end="url(#a0)"/>
+      <text x="518" y="56" text-anchor="middle" class="ts">명령</text>
+      <line x1="560" y1="104" x2="484" y2="104" class="ln" marker-end="url(#a0)"/>
+      <text x="522" y="122" text-anchor="middle" class="ts">측정값</text>
+
+      <!-- chamber -->
+      <rect x="290" y="220" width="450" height="140" rx="12" class="box-soft"/>
+      <text x="308" y="244" class="tb">실험실 방 (챔버)</text>
+      <rect x="310" y="262" width="180" height="80" rx="8" class="box"/>
+      <text x="400" y="292" text-anchor="middle" class="tb">부하장치</text>
+      <text x="400" y="314" text-anchor="middle" class="ts">열을 빼서 방을 식힘</text>
+      <text x="400" y="331" text-anchor="middle" class="ts">(추운 집 흉내)</text>
+      <rect x="560" y="262" width="160" height="80" rx="8" class="box-heat"/>
+      <text x="640" y="292" text-anchor="middle" class="tb">진짜 히트펌프</text>
+      <text x="640" y="314" text-anchor="middle" class="ts">자기 온도조절기로</text>
+      <text x="640" y="331" text-anchor="middle" class="ts">스스로 난방</text>
+      <line x1="490" y1="302" x2="556" y2="302" class="ln-heat" marker-end="url(#a0h)"/>
+      <text x="523" y="294" text-anchor="middle" class="th">방이 식음</text>
+
+      <!-- plc <-> chamber -->
+      <line x1="620" y1="134" x2="620" y2="216" class="ln" marker-end="url(#a0)"/>
+      <text x="612" y="182" text-anchor="end" class="ts">장비 조작</text>
+      <line x1="690" y1="220" x2="690" y2="138" class="ln" marker-end="url(#a0)"/>
+      <text x="698" y="182" class="ts">센서</text>
+
+      <!-- forbidden direct command -->
+      <line x1="385" y1="134" x2="585" y2="258" class="ln-heat dash"/>
+      <g transform="translate(485,196)">
+        <circle r="11" class="box-heat"/>
+        <path d="M-5,-5 L5,5 M5,-5 L-5,5" class="ln-heat"/>
+      </g>
+      <text x="412" y="174" text-anchor="end" class="th">히트펌프에 직접 명령 안 함</text>
+
+      <!-- loop note -->
+      <text x="20" y="250" class="ta">한 바퀴 요약</text>
+      <text x="20" y="272" class="ts">① 가상 집이 필요한 열 계산</text>
+      <text x="20" y="292" class="ts">② 통역사가 명령으로 바꿈</text>
+      <text x="20" y="312" class="ts">③ 반장이 방에서 열을 뺌</text>
+      <text x="20" y="332" class="ts">④ 히트펌프가 알아서 데움</text>
+      <text x="20" y="352" class="ts">⑤ 방 온도가 가상 집으로</text>
+    </svg>
+    </div>
+    <figcaption>실선은 실제로 오가는 신호입니다. 빨간 점선은 일부러 만들지 않은 연결입니다. 히트펌프의 압축기나 팬을 컴퓨터가 직접 움직이면, 제품 본래의 제어 성능을 시험할 수 없기 때문입니다.</figcaption>
+  </figure>
+</section>
+
+<!-- 1 -->
+<section id="cast">
+  <div class="sec-head"><span class="eyebrow">등장인물</span><h2>누가 무슨 일을 하나</h2></div>
+  <div class="tbl"><table>
+    <thead><tr><th>구성요소</th><th>비유</th><th>하는 일</th><th>실제 파일</th></tr></thead>
+    <tbody>
+      <tr><td><b>가상 건물</b></td><td>설계도 속의 집</td><td>바깥 기온, 햇빛, 사람 발열, 벽의 열 저장을 계산해 "지금 필요한 열"을 알려 줌. 1분마다 1회</td><td><code>hils_building_step.m</code><br><code>building.py</code></td></tr>
+      <tr><td><b>Simulink 감독</b></td><td>통역사 겸 감독</td><td>가상 집의 요구를 장비 명령으로 번역. 목표와 실측을 비교해 1초마다 명령을 다듬고, 이상하면 멈춤</td><td><code>build_HILS_Controller.m</code><br><code>hils_supervisor_step.m</code></td></tr>
+      <tr><td><b>PLC</b></td><td>현장 반장</td><td>명령을 받아 부하장치를 움직이고 온도·열량·전력 센서를 읽어 돌려줌. 받은 명령 번호를 영수증으로 회신</td><td>실물 PLC 또는 가짜 PLC<br><code>plc_server.py</code></td></tr>
+      <tr><td><b>챔버 + 부하장치</b></td><td>무대 세트</td><td>가상 집이 잃는 만큼 방에서 열을 빼 앗아, 추운 집 안에 있는 것과 같은 조건을 만듦</td><td>실물 장비<br>(시험용 흉내: <code>emulator.py</code>)</td></tr>
+      <tr><td><b>히트펌프</b></td><td>시험 받는 배우</td><td>대본(명령) 없이 자기 판단으로 연기. 방이 식으면 스스로 켜지고 세기를 조절</td><td>실물 제품<br>(흉내: <code>HeatPumpNative</code>)</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- 2 -->
+<section id="clock">
+  <div class="sec-head"><span class="eyebrow">두 개의 시계</span><h2>큰 시계는 1분, 작은 시계는 1초</h2></div>
+  <div class="easy"><b>쉽게 말하면</b>
+    <p>가상 집은 1분에 한 번 "이번 1분 동안 필요한 열은 이만큼"이라고 주문서를 냅니다. 통역사와 반장은 그 주문서를 들고 1초마다 "지금 잘 되고 있나?" 확인하며 장비를 조금씩 조정합니다. 요리로 치면 레시피는 1분마다 바뀌고, 불 조절은 1초마다 하는 셈입니다.</p>
+  </div>
+  <figure>
+    <div class="scroll">
+    <svg viewBox="0 0 760 190" role="img" aria-label="0초, 60초, 120초에 가상 집이 새 목표를 계산하고, 그 사이 매 1초마다 통역사와 PLC가 측정과 명령을 주고받는다.">
+      <text x="20" y="46" class="ta">큰 시계 · 가상 집</text>
+      <text x="20" y="116" class="ta">작은 시계 · 통역사↔반장</text>
+      <line x1="150" y1="40" x2="740" y2="40" class="ln-mute"/>
+      <line x1="150" y1="110" x2="740" y2="110" class="ln-mute"/>
+      <!-- 1 s ticks: 150..720 over 120 s = 4.75 px/s -->
+      <g class="tick">
+        <path d="M150,104v12M154.75,106v8M159.5,106v8M164.25,106v8M169,106v8M173.75,106v8M178.5,106v8M183.25,106v8M188,106v8M192.75,106v8M197.5,106v8M202.25,106v8M207,106v8M211.75,106v8M216.5,106v8M221.25,106v8M226,106v8M230.75,106v8M235.5,106v8M240.25,106v8M245,106v8M249.75,106v8M254.5,106v8M259.25,106v8M264,106v8M268.75,106v8M273.5,106v8M278.25,106v8M283,106v8M287.75,106v8M292.5,106v8M297.25,106v8M302,106v8M306.75,106v8M311.5,106v8M316.25,106v8M321,106v8M325.75,106v8M330.5,106v8M335.25,106v8M340,106v8M344.75,106v8M349.5,106v8M354.25,106v8M359,106v8M363.75,106v8M368.5,106v8M373.25,106v8M378,106v8M382.75,106v8M387.5,106v8M392.25,106v8M397,106v8M401.75,106v8M406.5,106v8M411.25,106v8M416,106v8M420.75,106v8M425.5,106v8M430.25,106v8M435,104v12M439.75,106v8M444.5,106v8M449.25,106v8M454,106v8M458.75,106v8M463.5,106v8M468.25,106v8M473,106v8M477.75,106v8M482.5,106v8M487.25,106v8M492,106v8M496.75,106v8M501.5,106v8M506.25,106v8M511,106v8M515.75,106v8M520.5,106v8M525.25,106v8M530,106v8M534.75,106v8M539.5,106v8M544.25,106v8M549,106v8M553.75,106v8M558.5,106v8M563.25,106v8M568,106v8M572.75,106v8M577.5,106v8M582.25,106v8M587,106v8M591.75,106v8M596.5,106v8M601.25,106v8M606,106v8M610.75,106v8M615.5,106v8M620.25,106v8M625,106v8M629.75,106v8M634.5,106v8M639.25,106v8M644,106v8M648.75,106v8M653.5,106v8M658.25,106v8M663,106v8M667.75,106v8M672.5,106v8M677.25,106v8M682,106v8M686.75,106v8M691.5,106v8M696.25,106v8M701,106v8M705.75,106v8M710.5,106v8M715.25,106v8M720,104v12"/>
+      </g>
+      <circle cx="150" cy="40" r="7" class="dot-acc"/><circle cx="435" cy="40" r="7" class="dot-acc"/><circle cx="720" cy="40" r="7" class="dot-acc"/>
+      <text x="150" y="24" text-anchor="middle" class="t">주문서 #1</text>
+      <text x="435" y="24" text-anchor="middle" class="t">주문서 #2</text>
+      <text x="720" y="24" text-anchor="middle" class="t">주문서 #3</text>
+      <text x="150" y="64" text-anchor="middle" class="ts">2.0 kW</text>
+      <text x="435" y="64" text-anchor="middle" class="ts">3.5 kW</text>
+      <text x="720" y="64" text-anchor="middle" class="ts">3.4 kW</text>
+      <text x="150" y="140" text-anchor="middle" class="tm">0 s</text>
+      <text x="435" y="140" text-anchor="middle" class="tm">60 s</text>
+      <text x="720" y="140" text-anchor="middle" class="tm">120 s</text>
+      <text x="292" y="172" text-anchor="middle" class="ts">1초 눈금 60개 = 확인·조정 60번</text>
+      <text x="578" y="172" text-anchor="middle" class="ts">주문서 #2를 들고 다시 60번</text>
+    </svg>
+    </div>
+    <figcaption>큰 점은 가상 집이 새 목표를 내는 순간(1분 간격), 작은 눈금은 통역사와 반장이 대화하는 순간(1초 간격)입니다. 두 시계를 나누면 느린 건물 계산과 빠른 장비 조정이 서로 방해하지 않습니다. kW 숫자는 예시입니다.</figcaption>
+  </figure>
+  <h3>작은 시계가 한 번 째깍할 때 (1초 동안 일어나는 일)</h3>
+  <ol class="steps">
+    <li><div><b>측정값 읽기</b><small>반장(PLC)의 우편함 40001~40010에서 방 온도, 재현된 열, 히트펌프 전력, 영수증 번호를 가져옵니다.</small></div></li>
+    <li><div><b>건강 검진</b><small>반장이 살아 있는지(심장박동 숫자), 영수증이 너무 늦지 않는지, 온도·전력이 안전 범위인지 확인합니다.</small></div></li>
+    <li><div><b>지금 단계 결정</b><small>준비 중인지, 안정되는 중인지, 정상 운전인지, 멈춰야 하는지 판단합니다(아래 "운전 단계").</small></div></li>
+    <li><div><b>명령 계산</b><small>목표 열과 실제 열의 차이를 보고 부하장치 명령을 조금 고칩니다. 한 번에 50 W 이상은 바꾸지 않습니다.</small></div></li>
+    <li><div><b>명령 보내기</b><small>명령을 숫자로 바꿔 우편함 40100~40105에 넣습니다.</small></div></li>
+    <li><div><b>반장이 실행</b><small>PLC가 부하장치를 움직입니다. 히트펌프는 그 결과로 달라진 방 온도에 스스로 반응합니다.</small></div></li>
+  </ol>
+</section>
+
+<!-- 3 -->
+<section id="mailbox">
+  <div class="sec-head"><span class="eyebrow">숫자 우편함</span><h2>값은 번호 붙은 칸에 정수로 담겨 오간다</h2></div>
+  <div class="easy"><b>쉽게 말하면</b>
+    <p>통역사와 반장은 번호가 붙은 우편함으로 대화합니다(Modbus 통신). 우편함에는 소수점 없는 정수만 들어가서, 23.57 °C는 100을 곱해 2357로 넣고 꺼낼 때 다시 100으로 나눕니다. 영하처럼 음수가 필요한 값은 정해진 약속(2의 보수)으로 담습니다.</p>
+  </div>
+  <figure>
+    <div class="scroll">
+    <svg viewBox="0 0 760 130" role="img" aria-label="23.57도는 100을 곱해 정수 2357로 우편함 40001에 담기고, 받는 쪽에서 100으로 나눠 다시 23.57도가 된다.">
+      <defs><marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker></defs>
+      <rect x="10" y="40" width="110" height="50" rx="8" class="box"/><text x="65" y="71" text-anchor="middle" class="tm">23.57 °C</text>
+      <text x="65" y="112" text-anchor="middle" class="ts">센서 값</text>
+      <line x1="120" y1="65" x2="176" y2="65" class="ln" marker-end="url(#a3)"/><text x="148" y="56" text-anchor="middle" class="ta">×100</text>
+      <rect x="180" y="40" width="100" height="50" rx="8" class="box"/><text x="230" y="71" text-anchor="middle" class="tm">2357</text>
+      <text x="230" y="112" text-anchor="middle" class="ts">정수</text>
+      <line x1="280" y1="65" x2="316" y2="65" class="ln" marker-end="url(#a3)"/>
+      <rect x="320" y="30" width="130" height="70" rx="8" class="box-acc"/><text x="385" y="58" text-anchor="middle" class="tb">우편함 40001</text><text x="385" y="80" text-anchor="middle" class="tm">2357</text>
+      <text x="385" y="122" text-anchor="middle" class="ts">통신선으로 전달</text>
+      <line x1="450" y1="65" x2="486" y2="65" class="ln" marker-end="url(#a3)"/>
+      <rect x="490" y="40" width="100" height="50" rx="8" class="box"/><text x="540" y="71" text-anchor="middle" class="tm">2357</text>
+      <line x1="590" y1="65" x2="636" y2="65" class="ln" marker-end="url(#a3)"/><text x="613" y="56" text-anchor="middle" class="ta">÷100</text>
+      <rect x="640" y="40" width="110" height="50" rx="8" class="box"/><text x="695" y="71" text-anchor="middle" class="tm">23.57 °C</text>
+      <text x="695" y="112" text-anchor="middle" class="ts">받은 값</text>
+    </svg>
+    </div>
+    <figcaption>보내는 쪽과 받는 쪽이 같은 곱셈 규칙(설정 파일 <code>hils_config.json</code>)을 써야 값이 틀어지지 않습니다. 반올림 규칙까지 맞춰야 해서, Python의 반올림 방식도 MATLAB·PLC와 같게 고쳤습니다.</figcaption>
+  </figure>
+  <div class="tbl"><table>
+    <thead><tr><th>우편함</th><th>내용</th><th>방향</th><th>담는 방법</th><th>예시</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">40001</td><td>방 온도</td><td>반장 → 통역사</td><td>×100</td><td class="mono">2357 = 23.57 °C</td></tr>
+      <tr><td class="mono">40005</td><td>히트펌프가 낸 열</td><td>반장 → 통역사</td><td>W 그대로</td><td class="mono">4200 = 4.2 kW</td></tr>
+      <tr><td class="mono">40007</td><td>방에서 실제로 뺀 열</td><td>반장 → 통역사</td><td>W 그대로</td><td class="mono">3180 = 3.18 kW</td></tr>
+      <tr><td class="mono">40008</td><td>영수증 번호 (Ack)</td><td>반장 → 통역사</td><td>정수</td><td class="mono">125</td></tr>
+      <tr><td class="mono">40010</td><td>반장 심장박동</td><td>반장 → 통역사</td><td>1초마다 +1</td><td class="mono">8812</td></tr>
+      <tr><td class="mono">40100</td><td>방에서 뺄 열 명령</td><td>통역사 → 반장</td><td>W 그대로</td><td class="mono">3200</td></tr>
+      <tr><td class="mono">40102</td><td>재현 켜기/끄기</td><td>통역사 → 반장</td><td>0 또는 1</td><td class="mono">1</td></tr>
+      <tr><td class="mono">40103</td><td>송장 번호 (Sequence)</td><td>통역사 → 반장</td><td>1분마다 +1</td><td class="mono">125</td></tr>
+      <tr><td class="mono">40104</td><td>통역사 심장박동</td><td>통역사 → 반장</td><td>1초마다 +1</td><td class="mono">7431</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">전체 16개 우편함 목록은 <code>docs/02_interface_spec.md</code>에 있습니다. 히트펌프 설정온도를 바꾸는 우편함은 일부러 만들지 않았습니다.</p>
+</section>
+
+<!-- 4 -->
+<section id="ticket">
+  <div class="sec-head"><span class="eyebrow">송장 번호</span><h2>명령에 번호를 붙여 늦게 도착해도 헷갈리지 않게</h2></div>
+  <div class="easy"><b>쉽게 말하면</b>
+    <p>택배에 송장 번호가 있듯, 1분마다 나가는 주문서에 번호를 붙입니다. 반장은 주문을 실제로 적용하면 "#1번 적용했습니다"라는 영수증을 돌려줍니다. 통역사는 영수증을 보고 두 가지를 압니다. 명령이 도착하기까지 몇 초 걸렸는지, 그리고 지금 측정값이 몇 번 주문의 결과인지입니다. 그래서 늘 같은 번호의 목표와 측정값끼리 비교합니다.</p>
+  </div>
+  <figure>
+    <div class="scroll">
+    <svg viewBox="0 0 760 300" role="img" aria-label="통신이 90초 늦는 경우, 주문 #1의 영수증이 오기 전에 주문 #2가 이미 출발한다. 통역사는 두 주문을 모두 기억하고 영수증 번호에 맞는 목표와 측정값을 비교한다.">
+      <defs>
+        <marker id="a4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="ah-acc"/></marker>
+        <marker id="a4k" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker>
+      </defs>
+      <text x="200" y="22" text-anchor="middle" class="tb">통역사 (Simulink)</text>
+      <text x="580" y="22" text-anchor="middle" class="tb">반장 (PLC)</text>
+      <line x1="200" y1="34" x2="200" y2="290" class="ln-mute"/>
+      <line x1="580" y1="34" x2="580" y2="290" class="ln-mute"/>
+      <!-- time labels: y = 44 + t*1.3 -->
+      <text x="20" y="48" class="tm">0 s</text>
+      <text x="20" y="126" class="tm">60 s</text>
+      <text x="20" y="166" class="tm">91 s</text>
+      <text x="20" y="244" class="tm">151 s</text>
+      <!-- send #1 -->
+      <line x1="200" y1="44" x2="576" y2="161" class="ln-acc" marker-end="url(#a4)"/>
+      <text x="300" y="62" class="ta">주문 #1 · 2.0 kW</text>
+      <!-- ack #1 -->
+      <line x1="580" y1="163" x2="204" y2="166" class="ln" marker-end="url(#a4k)"/>
+      <text x="470" y="156" text-anchor="middle" class="t">영수증 #1</text>
+      <!-- send #2 -->
+      <line x1="200" y1="122" x2="576" y2="239" class="ln-acc" marker-end="url(#a4)"/>
+      <text x="300" y="140" class="ta">주문 #2 · 3.5 kW</text>
+      <!-- ack #2 -->
+      <line x1="580" y1="241" x2="204" y2="244" class="ln" marker-end="url(#a4k)"/>
+      <text x="470" y="236" text-anchor="middle" class="t">영수증 #2</text>
+      <!-- notes -->
+      <rect x="600" y="100" width="150" height="46" rx="6" class="box"/>
+      <text x="675" y="119" text-anchor="middle" class="ts">90초 걸려 도착</text>
+      <text x="675" y="136" text-anchor="middle" class="ts">(1분보다 김)</text>
+      <rect x="44" y="174" width="146" height="54" rx="6" class="box-acc"/>
+      <text x="117" y="190" text-anchor="middle" class="ts">대기 중인 주문 기억</text>
+      <text x="117" y="206" text-anchor="middle" class="tm">#1 ✓  #2 …</text>
+      <text x="117" y="222" text-anchor="middle" class="ts">지연 = 91초</text>
+      <text x="390" y="284" text-anchor="middle" class="ts">#1 영수증이 오기 전에 #2가 이미 출발했다 (두 선이 겹치는 부분)</text>
+    </svg>
+    </div>
+    <figcaption>통신이 1분 넘게 늦어지면 주문이 두 개씩 동시에 이동 중이 됩니다. 처음 만든 버전은 가장 최근 주문 하나만 기억해서 영수증을 영원히 맞추지 못했습니다. 지금은 대기 중인 주문을 모두 기억하도록 고쳤습니다(결과보고서 E1).</figcaption>
+  </figure>
+</section>
+
+<!-- 5 -->
+<section id="cruise">
+  <div class="sec-head"><span class="eyebrow">조절 장치</span><h2>자동차 크루즈 컨트롤처럼 목표 열을 따라간다</h2></div>
+  <div class="easy"><b>쉽게 말하면</b>
+    <p>크루즈 컨트롤은 목표 속도에 맞춰 가속 페달을 밟다가, 실제 속도가 모자라면 조금 더 밟습니다. 여기서도 같습니다. 목표 열만큼 먼저 명령하고(미리 밟기), 실제로 빠진 열이 모자라면 그 차이만큼 더 명령합니다(PI 보정). 급하게 밟지 않도록 1초에 50 W까지만 바꾸고, 장비 한계인 ±8 kW는 넘지 않습니다.</p>
+  </div>
+  <figure>
+    <div class="scroll">
+    <svg viewBox="0 0 760 240" role="img" aria-label="목표 열은 미리 밟기 경로와 차이 보정 경로로 나뉜다. 두 값을 더한 뒤 변화 속도 제한과 최대값 제한을 거쳐 부하장치로 간다. 실제로 뺀 열이 되돌아와 목표와 비교된다. 통신 지연이 길면 보정 강도를 자동으로 낮춘다.">
+      <defs>
+        <marker id="a5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker>
+        <marker id="a5a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="ah-acc"/></marker>
+      </defs>
+      <text x="14" y="136" class="t">목표 열</text>
+      <line x1="66" y1="132" x2="146" y2="132" class="ln" marker-end="url(#a5)"/>
+      <circle cx="100" cy="132" r="3.5" class="ah"/>
+      <!-- feedforward -->
+      <polyline points="100,132 100,40 400,40 400,114" class="ln" marker-end="url(#a5)"/>
+      <text x="250" y="32" text-anchor="middle" class="t">미리 밟기 (목표만큼 바로 명령)</text>
+      <!-- sum 1 -->
+      <circle cx="160" cy="132" r="14" class="box"/><text x="160" y="137" text-anchor="middle" class="t">−</text>
+      <line x1="174" y1="132" x2="206" y2="132" class="ln" marker-end="url(#a5)"/>
+      <text x="190" y="122" text-anchor="middle" class="ts">차이</text>
+      <!-- PI -->
+      <rect x="210" y="112" width="120" height="40" rx="8" class="box"/>
+      <text x="270" y="137" text-anchor="middle" class="tb">차이 보정 PI</text>
+      <line x1="330" y1="132" x2="382" y2="132" class="ln" marker-end="url(#a5)"/>
+      <!-- delay monitor -->
+      <rect x="210" y="60" width="120" height="30" rx="6" class="box-acc"/>
+      <text x="270" y="80" text-anchor="middle" class="ta">지연 측정기</text>
+      <line x1="270" y1="90" x2="270" y2="108" class="ln-acc dash" marker-end="url(#a5a)"/>
+      <text x="340" y="80" class="ta">지연 길면 약하게</text>
+      <!-- sum 2 -->
+      <circle cx="400" cy="132" r="14" class="box"/><text x="400" y="137" text-anchor="middle" class="t">+</text>
+      <line x1="414" y1="132" x2="436" y2="132" class="ln" marker-end="url(#a5)"/>
+      <rect x="440" y="112" width="92" height="40" rx="8" class="box"/>
+      <text x="486" y="130" text-anchor="middle" class="t">변화 제한</text><text x="486" y="146" text-anchor="middle" class="ts">50 W/초</text>
+      <line x1="532" y1="132" x2="548" y2="132" class="ln" marker-end="url(#a5)"/>
+      <rect x="552" y="112" width="84" height="40" rx="8" class="box"/>
+      <text x="594" y="130" text-anchor="middle" class="t">최대 제한</text><text x="594" y="146" text-anchor="middle" class="ts">±8 kW</text>
+      <line x1="636" y1="132" x2="652" y2="132" class="ln" marker-end="url(#a5)"/>
+      <rect x="656" y="106" width="94" height="52" rx="8" class="box-soft"/>
+      <text x="703" y="128" text-anchor="middle" class="t">PLC·</text><text x="703" y="146" text-anchor="middle" class="t">부하장치</text>
+      <!-- feedback -->
+      <polyline points="703,158 703,206 160,206 160,150" class="ln" marker-end="url(#a5)"/>
+      <text x="430" y="226" text-anchor="middle" class="t">실제로 뺀 열 (측정값, 같은 송장 번호의 목표와 비교)</text>
+    </svg>
+    </div>
+    <figcaption>위쪽 경로가 목표를 바로 반영하고, 가운데 경로가 장비의 오차(이 시험에서는 명령의 93 %만 나오고 150 W가 덜 나오는 장비를 가정)를 채웁니다. 지연 측정기는 앞 절의 영수증으로 잰 지연을 보고 보정 강도를 낮춥니다.</figcaption>
+  </figure>
+  <h3>통신 지연에 따라 보정 강도를 자동으로 낮추면</h3>
+  <p>반응이 늦게 돌아오는데 세게 보정하면, 샤워기 온도를 급하게 돌리다 뜨거웠다 차가웠다 하는 것처럼 흔들립니다. 2시간 계단 시험(2.0 → 3.5 → 1.5 → 3.0 kW)의 결과입니다.</p>
+  <div class="tbl"><table>
+    <thead><tr><th class="num">통신 지연</th><th class="num">보정 강도 (Kp)</th><th>고정 강도의 결과</th><th>자동 조절의 결과</th></tr></thead>
+    <tbody>
+      <tr><td class="num">3 초</td><td class="num">0.40</td><td><span class="pill ok">정상</span> 오차 30 W</td><td><span class="pill ok">정상</span> 오차 30 W</td></tr>
+      <tr><td class="num">30 초</td><td class="num">0.32</td><td><span class="pill ok">정상</span> 오차 30 W</td><td><span class="pill ok">정상</span> 오차 30 W</td></tr>
+      <tr><td class="num">60 초</td><td class="num">0.16</td><td><span class="pill warn">불안정</span> 오차 50 W</td><td><span class="pill ok">정상</span> 오차 36 W</td></tr>
+      <tr><td class="num">90 초</td><td class="num">0.11</td><td><span class="pill bad">진동·정지</span> 정상 구간 없음</td><td><span class="pill ok">정상</span> 오차 55 W</td></tr>
+      <tr><td class="num">120 초</td><td class="num">0.08</td><td><span class="pill bad">진동·정지</span> 정상 구간 없음</td><td><span class="pill ok">정상</span> 오차 58 W</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">오차는 정상 운전 구간의 평균 제곱근 오차입니다. 보정 강도 열은 자동 조절 방식에서 지연별로 정해진 값이고, 고정 방식은 항상 0.40입니다.</p>
+</section>
+
+<!-- 6 -->
+<section id="lights">
+  <div class="sec-head"><span class="eyebrow">운전 단계</span><h2>여섯 가지 상태를 차례로 지난다</h2></div>
+  <div class="easy"><b>쉽게 말하면</b>
+    <p>비행기가 탑승 → 이륙 → 순항 → 난기류 대응을 거치듯, 실험도 정해진 단계를 밟습니다. 연구 데이터로 쓰는 것은 초록색 "정상 운전" 구간뿐입니다. 막 시작했거나 목표가 크게 바뀐 직후의 흔들리는 구간은 자동으로 표시해 두었다가 분석에서 뺍니다.</p>
+  </div>
+  <figure>
+    <div class="scroll">
+    <svg viewBox="0 0 760 270" role="img" aria-label="시작 준비에서 PLC 대기, 안정화, 정상 운전 순서로 진행한다. 목표가 크게 바뀌면 목표 변경을 거쳐 다시 안정화한다. 어느 단계든 이상이 생기면 안전 정지로 가고, 60초 동안 정상이면 PLC 대기로 돌아온다.">
+      <defs><marker id="a6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker>
+      <marker id="a6h" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="ah-heat"/></marker></defs>
+      <rect x="10" y="40" width="110" height="50" rx="10" class="box"/><text x="65" y="62" text-anchor="middle" class="tb">시작 준비</text><text x="65" y="80" text-anchor="middle" class="ts">INIT</text>
+      <rect x="170" y="40" width="130" height="50" rx="10" class="box"/><text x="235" y="62" text-anchor="middle" class="tb">반장 대기</text><text x="235" y="80" text-anchor="middle" class="ts">WAIT_PLC</text>
+      <rect x="370" y="40" width="130" height="50" rx="10" class="box"/><text x="435" y="62" text-anchor="middle" class="tb">안정화</text><text x="435" y="80" text-anchor="middle" class="ts">STABILIZING</text>
+      <rect x="590" y="40" width="150" height="50" rx="10" class="box-ok"/><text x="665" y="62" text-anchor="middle" class="tb">정상 운전</text><text x="665" y="80" text-anchor="middle" class="ts">RUN · 데이터 사용</text>
+      <rect x="480" y="150" width="140" height="46" rx="10" class="box"/><text x="550" y="170" text-anchor="middle" class="tb">목표 변경</text><text x="550" y="187" text-anchor="middle" class="ts">STEP_CHANGE</text>
+      <rect x="140" y="200" width="190" height="50" rx="10" class="box-heat"/><text x="235" y="222" text-anchor="middle" class="tb">안전 정지</text><text x="235" y="240" text-anchor="middle" class="ts">SAFE_STOP · 부하 끔</text>
+
+      <line x1="120" y1="65" x2="166" y2="65" class="ln" marker-end="url(#a6)"/>
+      <line x1="300" y1="65" x2="366" y2="65" class="ln" marker-end="url(#a6)"/>
+      <text x="333" y="56" text-anchor="middle" class="ts">반장 준비됨</text>
+      <line x1="500" y1="65" x2="586" y2="65" class="ln" marker-end="url(#a6)"/>
+      <text x="543" y="30" text-anchor="middle" class="ts">오차 300 W 이내</text>
+      <text x="543" y="56" text-anchor="middle" class="ts">2분 유지</text>
+      <line x1="665" y1="90" x2="600" y2="147" class="ln" marker-end="url(#a6)"/>
+      <text x="748" y="116" text-anchor="end" class="ts">목표가 500 W</text><text x="748" y="132" text-anchor="end" class="ts">넘게 변함</text>
+      <line x1="500" y1="150" x2="455" y2="94" class="ln" marker-end="url(#a6)"/>
+      <text x="470" y="130" text-anchor="end" class="ts">곧바로</text>
+      <line x1="400" y1="90" x2="300" y2="197" class="ln-heat" marker-end="url(#a6h)"/>
+      <text x="360" y="160" class="th">이상 감지</text>
+      <text x="360" y="176" class="th">(어느 단계에서든)</text>
+      <line x1="200" y1="200" x2="200" y2="94" class="ln" marker-end="url(#a6)"/>
+      <text x="192" y="150" text-anchor="end" class="ts">60초 정상 유지</text>
+    </svg>
+    </div>
+    <figcaption>빨간 화살표는 대표로 하나만 그렸지만, 실제로는 반장 대기·안정화·정상 운전·목표 변경 어디서든 이상이 감지되면 바로 안전 정지로 갑니다.</figcaption>
+  </figure>
+  <div class="tbl"><table>
+    <thead><tr><th>단계</th><th>재현 장치</th><th>다음으로 넘어가는 조건</th></tr></thead>
+    <tbody>
+      <tr><td>시작 준비</td><td>꺼짐</td><td>프로그램이 시작되면 바로 반장 대기로</td></tr>
+      <tr><td>반장 대기</td><td>꺼짐 (방은 22 °C로 미리 맞춤)</td><td>PLC가 "준비됨" 신호를 주면 안정화로. 60초 안에 안 오면 안전 정지</td></tr>
+      <tr><td>안정화</td><td>켜짐</td><td>목표와 실제 차이가 300 W 이내로 2분 유지되면 정상 운전. 30분이 지나도 안 되면 안전 정지</td></tr>
+      <tr><td><b>정상 운전</b></td><td>켜짐</td><td>목표가 500 W 넘게 바뀌면 목표 변경으로</td></tr>
+      <tr><td>목표 변경</td><td>켜짐</td><td>표시만 하고 곧바로 안정화로</td></tr>
+      <tr><td>안전 정지</td><td>1초에 50 W씩 줄여 끔</td><td>이상이 사라진 상태로 60초 지나면 반장 대기로</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- 7 -->
+<section id="safety">
+  <div class="sec-head"><span class="eyebrow">안전장치</span><h2>감독과 반장이 서로를 지켜본다</h2></div>
+  <div class="easy"><b>쉽게 말하면</b>
+    <p>둘은 1초마다 숫자를 하나씩 올려 보냅니다. 이것이 심장박동입니다. 상대의 숫자가 10초 동안 멈춰 있으면 "연락이 끊겼다"고 판단합니다. 감독 쪽에서 멈추는 장치(Simulink 인터록)와 반장 쪽에서 멈추는 장치(PLC watchdog)를 따로 두어, 한쪽이 고장 나도 다른 쪽이 부하장치를 끕니다. 히트펌프는 어떤 경우에도 계속 자기 판단으로 운전합니다.</p>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>감시 항목</th><th>멈추는 조건</th><th>누가 감지</th></tr></thead>
+    <tbody>
+      <tr><td>방 온도</td><td>10 °C 미만 또는 35 °C 초과</td><td>감독</td></tr>
+      <tr><td>습도</td><td>90 % 초과</td><td>감독</td></tr>
+      <tr><td>히트펌프 상태</td><td>고장 코드(9)</td><td>감독</td></tr>
+      <tr><td>히트펌프 전력</td><td>4 kW 초과</td><td>감독</td></tr>
+      <tr><td>반장 상태</td><td>고장, 비상정지 버튼, 반장 watchdog 작동</td><td>감독</td></tr>
+      <tr><td>반장 심장박동</td><td>10초간 변화 없음</td><td>감독</td></tr>
+      <tr><td>영수증</td><td>가장 오래된 주문의 영수증이 120초 넘게 안 옴</td><td>감독</td></tr>
+      <tr><td>감독 심장박동</td><td>10초간 변화 없음 → 부하장치 스스로 끔</td><td><b>반장</b></td></tr>
+    </tbody>
+  </table></div>
+  <h3>일부러 고장을 내 본 결과 (80분 시험)</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>일부러 낸 고장</th><th class="num">고장 시각</th><th class="num">멈춘 시각</th><th>이유</th><th class="num">정상 복귀</th></tr></thead>
+    <tbody>
+      <tr><td>반장 심장박동 100초 정지</td><td class="num">900 s</td><td class="num">911 s</td><td>반장 연락 끊김</td><td class="num">1259 s</td></tr>
+      <tr><td>비상정지 버튼 100초</td><td class="num">2100 s</td><td class="num">2101 s</td><td>비상정지</td><td class="num">2461 s</td></tr>
+      <tr><td>감독의 명령 전송 300초 끊김</td><td class="num">3300 s</td><td class="num">3311 s</td><td>반장 watchdog</td><td class="num">3862 s</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">세 번째 경우는 처음에는 영수증 지연만으로 감지해서 121초가 걸렸습니다. 그 사이 반장은 마지막 명령을 계속 붙잡고 있었습니다. 반장 쪽 watchdog을 추가해 11초로 줄였습니다(결과보고서 E4).</p>
+</section>
+
+<!-- 8 -->
+<section id="modes">
+  <div class="sec-head"><span class="eyebrow">실행 방법</span><h2>진짜 장비 없이 먼저, 점점 진짜에 가깝게</h2></div>
+  <div class="easy"><b>쉽게 말하면</b>
+    <p>연극도 대본 읽기, 리허설, 본공연 순서로 준비합니다. 이 시스템도 전부 컴퓨터로 흉내 내는 단계에서 시작해, 통신만 진짜로 바꾸고, 마지막에 실제 장비를 붙입니다. 모든 단계가 같은 제어 코드를 쓰므로 앞 단계에서 확인한 동작이 그대로 이어집니다.</p>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>단계</th><th>진짜인 것</th><th>흉내 내는 것</th><th>실행 명령</th><th>확인 상태</th></tr></thead>
+    <tbody>
+      <tr><td>1. 컴퓨터 안에서만</td><td>제어 코드</td><td>건물, PLC, 방, 히트펌프, 통신</td><td><code>python examples/ex01_offline_24h.py</code><br><code>hils_run_offline.m</code></td><td><span class="pill ok">시험 통과</span></td></tr>
+      <tr><td>2. 통신까지 진짜</td><td>제어 코드, Modbus 통신</td><td>PLC(가짜 PLC 서버), 방, 히트펌프</td><td><code>python examples/ex03_modbus_loopback.py</code></td><td><span class="pill ok">시험 통과</span></td></tr>
+      <tr><td>3. Simulink 모델</td><td>제어 코드, Simulink</td><td>PLC·방·히트펌프 블록</td><td><code>build_HILS_Controller()</code></td><td><span class="pill warn">MATLAB에서 확인 필요</span></td></tr>
+      <tr><td>4. Simulink + 가짜 PLC</td><td>Simulink, Modbus 블록</td><td>PLC(가짜 PLC 서버)</td><td><code>build_HILS_Controller('PlcIo','modbus')</code></td><td><span class="pill warn">MATLAB에서 확인 필요</span></td></tr>
+      <tr><td>5. 실제 실험</td><td>전부</td><td>건물만 가상 (나중에 EnergyPlus)</td><td><code>hils_master('Mode','cosim')</code></td><td><span class="pill warn">장비 연결 후</span></td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">MATLAB 제어 코드와 Python 제어 코드는 같은 조건에서 매초 똑같은 숫자를 냅니다(3개 시나리오 교차 확인). Simulink 모델도 이 MATLAB 코드를 그대로 불러 쓰도록 만들었지만, 이 작업 환경에는 MATLAB이 없어 모델을 직접 돌려 보지는 못했습니다.</p>
+</section>
+
+<!-- 9 -->
+<section id="procedure">
+  <div class="sec-head"><span class="eyebrow">실험 순서</span><h2>실제 장비로 실험하는 날의 순서</h2></div>
+  <ol class="steps">
+    <li><div><b>히트펌프 설정</b><small>히트펌프 리모컨으로 설정온도(예: 22 °C)를 정합니다. 컴퓨터는 이 값을 건드리지 않습니다.</small></div></li>
+    <li><div><b>가짜 PLC로 리허설</b><small><code>python -m hils.plc_server --port 5020</code>를 띄우고 통신과 영수증이 정상인지 먼저 봅니다.</small></div></li>
+    <li><div><b>실제 PLC 주소로 모델 만들기</b><small><code>build_HILS_Controller('PlcIo','modbus','Host',PLC주소,'Port',502)</code> 실행 후, Modbus 블록의 우편함 번호와 개수를 한 번 확인합니다.</small></div></li>
+    <li><div><b>부하장치 특성 재기</b><small>명령을 계단식으로 바꿔 보고, 실제로 명령의 몇 %가 나오는지와 반응 시간을 설정 파일에 적습니다.</small></div></li>
+    <li><div><b>실험 시작</b><small><code>hils_master('Mode','cosim','Duration',초)</code>를 실행합니다. 화면의 단계가 반장 대기 → 안정화 → 정상 운전으로 넘어가는지 봅니다.</small></div></li>
+    <li><div><b>지켜보기</b><small>영수증 지연, 목표와 실제 열의 차이, 안전 정지 여부를 확인합니다. 멈추면 원인 비트를 보고 조치합니다.</small></div></li>
+    <li><div><b>데이터 정리</b><small>정상 운전(RUN) 표시가 된 구간만 골라 히트펌프 성능(공급열, 소비전력, 효율)을 분석합니다.</small></div></li>
+  </ol>
+</section>
+
+<footer>
+  <span>저장소 <code>brainwt/hils</code> · 브랜치 <code>claude/hils-heat-pump-control-tdlk4u</code></span>
+  <span>자세한 사양은 <code>docs/02_interface_spec.md</code>, 시험 결과는 <code>docs/03_result_report.md</code>에 있습니다. 표의 숫자는 에뮬레이터(흉내 장비) 시험 결과입니다.</span>
+</footer>
+</div>
